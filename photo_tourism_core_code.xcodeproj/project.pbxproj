@@ -10,6 +10,7 @@
 		2A658888172D3DB30076CDD8 /* helper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A658886172D3DB30076CDD8 /* helper.cpp */; };
 		2A91EC4C172D47E00038F7BA /* MultiCameraPnP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A91EC4A172D47E00038F7BA /* MultiCameraPnP.cpp */; };
 		2A91EC5C172D52E50038F7BA /* FeatureMatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A91EC5A172D52E50038F7BA /* FeatureMatcher.cpp */; };
+		2A91EC63172D60EA0038F7BA /* FindCameraMatrices.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A91EC61172D60EA0038F7BA /* FindCameraMatrices.cpp */; };
 		2AA7FE8D172D02C8004897B3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AA7FE8C172D02C8004897B3 /* main.cpp */; };
 		2AA7FE8F172D02C8004897B3 /* photo_tourism_core_code.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2AA7FE8E172D02C8004897B3 /* photo_tourism_core_code.1 */; };
 /* End PBXBuildFile section */
@@ -35,6 +36,8 @@
 		2A91EC4B172D47E00038F7BA /* MultiCameraPnP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MultiCameraPnP.h; sourceTree = "<group>"; };
 		2A91EC5A172D52E50038F7BA /* FeatureMatcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FeatureMatcher.cpp; sourceTree = "<group>"; };
 		2A91EC5B172D52E50038F7BA /* FeatureMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FeatureMatcher.h; sourceTree = "<group>"; };
+		2A91EC61172D60EA0038F7BA /* FindCameraMatrices.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FindCameraMatrices.cpp; sourceTree = "<group>"; };
+		2A91EC62172D60EA0038F7BA /* FindCameraMatrices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindCameraMatrices.h; sourceTree = "<group>"; };
 		2AA7FE88172D02C8004897B3 /* photo_tourism_core_code */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = photo_tourism_core_code; sourceTree = BUILT_PRODUCTS_DIR; };
 		2AA7FE8C172D02C8004897B3 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		2AA7FE8E172D02C8004897B3 /* photo_tourism_core_code.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = photo_tourism_core_code.1; sourceTree = "<group>"; };
@@ -79,6 +82,8 @@
 				2A91EC4B172D47E00038F7BA /* MultiCameraPnP.h */,
 				2A91EC5A172D52E50038F7BA /* FeatureMatcher.cpp */,
 				2A91EC5B172D52E50038F7BA /* FeatureMatcher.h */,
+				2A91EC61172D60EA0038F7BA /* FindCameraMatrices.cpp */,
+				2A91EC62172D60EA0038F7BA /* FindCameraMatrices.h */,
 			);
 			path = photo_tourism_core_code;
 			sourceTree = "<group>";
@@ -138,6 +143,7 @@
 				2A658888172D3DB30076CDD8 /* helper.cpp in Sources */,
 				2A91EC4C172D47E00038F7BA /* MultiCameraPnP.cpp in Sources */,
 				2A91EC5C172D52E50038F7BA /* FeatureMatcher.cpp in Sources */,
+				2A91EC63172D60EA0038F7BA /* FindCameraMatrices.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -155,6 +161,7 @@
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				ENABLE_OPENMP_SUPPORT = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -187,6 +194,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_OPENMP_SUPPORT = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_VERSION = com.apple.compilers.llvmgcc42;
@@ -212,6 +220,7 @@
 					"-lopencv_highgui",
 					"-lopencv_imgproc",
 					"-lopencv_features2d",
+					"-lopencv_calib3d",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -230,6 +239,7 @@
 					"-lopencv_highgui",
 					"-lopencv_imgproc",
 					"-lopencv_features2d",
+					"-lopencv_calib3d",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

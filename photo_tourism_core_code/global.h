@@ -15,5 +15,6 @@
 // some constants for debugging
 const char * const imageReadingDebugOutput = "imageReadingDebugOutput.xml";
 const char * const descriptorDebugOutput = "descriptorDebugOutput.xml";
+const char * const initialMatchMatrixDebugOutput = "initialMatchMatrixDebugOutput.xml";
 
 #endif

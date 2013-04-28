@@ -9,6 +9,7 @@
 #include "MultiCameraPnP.h"
 #include "global.h"
 #include <sstream>
+#include "helper.h"
 
 
 using namespace std;
@@ -86,6 +87,46 @@ MultiCameraPnP::MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
 
 void MultiCameraPnP::RecoverDepthFromImages(){
     OnlyMatchFeatures();
+    
+    //prepare to calculate matches between every pair of images.
+    int loop1_top = (int)imgs.size() - 1, loop2_top = (int)imgs.size();
+#pragma omp parallel for
+    //ZYM: frame_num_i and frame_num_j are indecies for 2 images currently being matched.
+    //ZYM: for N images, C(N,2) inner loops are executed in total.
+    
+    for (int frame_num_i = 0; frame_num_i < loop1_top; frame_num_i++) {
+        for (int frame_num_j = frame_num_i + 1; frame_num_j < loop2_top; frame_num_j++)
+        {
+            std::vector<cv::DMatch> matches_tmp; //ZYM: temporary variable saving matches.
+            feature_matcher->MatchFeatures(frame_num_i,frame_num_j,&matches_tmp);//ZYM: get matches. this match is not the match filtered by RANSAC, just the NN match.
+            matches_matrix[std::make_pair(frame_num_i,frame_num_j)] = matches_tmp;//ZYM: create a match matrix.
+            //good matches are NOT preserved!!!
+            
+            std::vector<cv::DMatch> matches_tmp_flip = FlipMatches(matches_tmp);
+            matches_matrix[std::make_pair(frame_num_j,frame_num_i)] = matches_tmp_flip; //ZYM: create flip version to make the matches_matrix complete.
+        }
+    }
+    
+#ifdef PHOTO_TOURISM_DEBUG
+    cerr << "======DEBUGGING INFO BEGINS======" << endl;
+    cerr << "write match matrix to file begins" << endl;
+    cv::FileStorage f;
+    f.open(initialMatchMatrixDebugOutput, cv::FileStorage::WRITE);
+    f << "test_list" << "[";
+    for (unsigned i = 0; i < imgs.size()-1; i++) {
+        for (unsigned j = i+1; j < imgs.size(); j++) {
+            const std::vector<cv::DMatch> & current_match_vector = matches_matrix[std::make_pair(i,j)];
+            for (unsigned k = 0; k < current_match_vector.size(); k++) {
+                f << current_match_vector[k].queryIdx;
+                f << current_match_vector[k].trainIdx;
+            }
+        }
+    }
+    f << "]";
+    f.release();
+    cerr << "write match matrix to file ends" << endl;
+    cerr << "======DEBUGGING INFO ENDS======" << endl;
+#endif
 }
 
 void MultiCameraPnP::OnlyMatchFeatures(){

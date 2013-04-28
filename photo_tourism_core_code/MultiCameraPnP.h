@@ -42,11 +42,12 @@ private:
     cv::Mat cam_matrix,distortion_coeff;
 	cv::Mat distcoeff_32f;
 	cv::Mat K_32f;
+    
+    std::map<std::pair<int,int> ,std::vector<cv::DMatch> > matches_matrix;
 
     cv::Ptr<FeatureMatcher> feature_matcher;
     
-    
-    
+
     
 };
 

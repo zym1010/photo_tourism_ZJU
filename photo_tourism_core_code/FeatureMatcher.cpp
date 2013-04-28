@@ -9,7 +9,9 @@
 #include "FeatureMatcher.h"
 #include "global.h"
 #include <sstream>
+#include <cassert>
 using namespace std;
+using namespace cv;
 
 FeatureMatcher::FeatureMatcher(std::vector<cv::Mat>& imgs_,
                                std::vector<std::vector<cv::KeyPoint> >& imgpts_):
@@ -41,4 +43,17 @@ imgs(imgs_), imgpts(imgpts_){
     cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
     
+}
+
+void FeatureMatcher::MatchFeatures(int idx_i, int idx_j, std::vector<cv::DMatch>* matches){
+    const Mat& descriptors_1 = descriptors[idx_i]; //ZYM: alias for (gray) image descriptors 1
+    const Mat& descriptors_2 = descriptors[idx_j]; //ZYM: alias for (gray) image descriptors 2
+    
+    std::vector< DMatch > good_matches_;//here, I should PRESERVE the match!
+    
+    //matching descriptor vectors using Brute Force matcher
+    BFMatcher matcher(NORM_HAMMING,true); //allow cross-check. use Hamming distance for binary descriptor (ORB)
+    
+    matcher.match( descriptors_1, descriptors_2, *matches);
+    assert(matches->size() > 0);
 }
