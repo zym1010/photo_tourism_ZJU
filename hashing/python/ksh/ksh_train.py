@@ -6,7 +6,7 @@ and the matlab code provided by the authors
 
 import numpy as np
 from scipy.spatial.distance import *
-
+from Gradient_decent import *
 #TODO load data
 
 # anchors are used for approximation of the nearest neighbor structure
