@@ -12,5 +12,7 @@
 // this is the flag for outputting additional debug info
 #define PHOTO_TOURISM_DEBUG
 
+// some constants for debugging
+const char *imageReadingDebugOutput = "imageReadingDebugOutput.xml";
 
 #endif
