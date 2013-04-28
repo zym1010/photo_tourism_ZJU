@@ -16,5 +16,6 @@
 const char * const imageReadingDebugOutput = "imageReadingDebugOutput.xml";
 const char * const descriptorDebugOutput = "descriptorDebugOutput.xml";
 const char * const initialMatchMatrixDebugOutput = "initialMatchMatrixDebugOutput.xml";
+const char * const refinedMatchMatrixDebugOutput = "refinedMatchMatrixDebugOutput.xml";
 
 #endif

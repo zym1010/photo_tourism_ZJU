@@ -10,6 +10,7 @@
 #include "global.h"
 #include <sstream>
 #include "helper.h"
+#include "FindCameraMatrices.h"
 
 
 using namespace std;
@@ -88,6 +89,12 @@ MultiCameraPnP::MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
 void MultiCameraPnP::RecoverDepthFromImages(){
     OnlyMatchFeatures();
     
+    PruneMatchesBasedOnF();
+}
+
+void MultiCameraPnP::OnlyMatchFeatures(){
+    feature_matcher = new FeatureMatcher(imgs,imgpts);
+    
     //prepare to calculate matches between every pair of images.
     int loop1_top = (int)imgs.size() - 1, loop2_top = (int)imgs.size();
 #pragma omp parallel for
@@ -127,8 +134,48 @@ void MultiCameraPnP::RecoverDepthFromImages(){
     cerr << "write match matrix to file ends" << endl;
     cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
+    
 }
 
-void MultiCameraPnP::OnlyMatchFeatures(){
-    feature_matcher = new FeatureMatcher(imgs,imgpts);
+
+void MultiCameraPnP::PruneMatchesBasedOnF() {
+	//prune the match between <_i> and all views using the Fundamental matrix to prune
+#pragma omp parallel for
+	for (int _i=0; _i < imgs.size() - 1; _i++)
+	{
+		for (unsigned int _j=_i+1; _j < imgs.size(); _j++) {
+			int older_view = _i, working_view = _j;
+            
+			GetFundamentalMat( imgpts[older_view],
+                              imgpts[working_view],
+                              imgpts_good[older_view],
+                              imgpts_good[working_view],
+                              matches_matrix[std::make_pair(older_view,working_view)]
+                              );
+			//update flip matches as well
+#pragma omp critical
+			matches_matrix[std::make_pair(working_view,older_view)] = FlipMatches(matches_matrix[std::make_pair(older_view,working_view)]);
+		}
+	}
+#ifdef PHOTO_TOURISM_DEBUG
+    cerr << "======DEBUGGING INFO BEGINS======" << endl;
+    cerr << "write match matrix to file begins" << endl;
+    cv::FileStorage f;
+    f.open(refinedMatchMatrixDebugOutput, cv::FileStorage::WRITE);
+    f << "test_list" << "[";
+    for (unsigned i = 0; i < imgs.size()-1; i++) {
+        for (unsigned j = i+1; j < imgs.size(); j++) {
+            const std::vector<cv::DMatch> & current_match_vector = matches_matrix[std::make_pair(i,j)];
+            for (unsigned k = 0; k < current_match_vector.size(); k++) {
+                f << current_match_vector[k].queryIdx;
+                f << current_match_vector[k].trainIdx;
+            }
+        }
+    }
+    f << "]";
+    f.release();
+    cerr << "write match matrix to file ends" << endl;
+    cerr << "======DEBUGGING INFO ENDS======" << endl;
+#endif
+    
 }

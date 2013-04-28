@@ -23,7 +23,7 @@ public:
 private:
     //private functions
     void OnlyMatchFeatures();
-    
+    void PruneMatchesBasedOnF();
     
     
     
