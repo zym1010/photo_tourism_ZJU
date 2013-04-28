@@ -13,6 +13,8 @@
 #define PHOTO_TOURISM_DEBUG
 
 // some constants for debugging
-const char *imageReadingDebugOutput = "imageReadingDebugOutput.xml";
+const char * const imageReadingDebugOutput = "imageReadingDebugOutput.xml";
+const char * const RGBimageReadingDebugOutput = "RGBimageReadingDebugOutput.xml";
+const char * const grayImageReadingDebugOutput = "grayImageReadingDebugOutput.xml";
 
 #endif

@@ -12,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <opencv2/opencv.hpp>
+#include "MultiCameraPnP.h"
 
 using namespace std;
 
@@ -70,7 +71,9 @@ int main(int argc, const char * argv[])
     
     //read images ends.
     
-    
+    //build the MultiCameraPnP object begins
+    cv::Ptr<MultiCameraPnP> distance = new MultiCameraPnP(images,images_names);
+    //build the MultiCameraPnP object ends
     
     std::cout << "Hello, World!\n";
     return 0;
