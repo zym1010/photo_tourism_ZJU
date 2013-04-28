@@ -7,6 +7,8 @@ and the matlab code provided by the authors
 import numpy as np
 from scipy.spatial.distance import *
 from Gradient_decent import *
+import cPickle
+
 #TODO load data
 
 # anchors are used for approximation of the nearest neighbor structure
@@ -65,3 +67,6 @@ for i in xrange(nbits):
 Y = np.array(np.dot(A1.T, K_train.T) > 0, dtype=float)
 idx = np.nonzero( Y <= 0)
 Y[idx] = -1
+
+with open('ksh.pkl', 'wb') as f:
+    cPickle.dump((Y, A1, X_anchor, mcols, sigma), f)
