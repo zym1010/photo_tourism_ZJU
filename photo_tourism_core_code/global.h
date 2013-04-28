@@ -14,7 +14,6 @@
 
 // some constants for debugging
 const char * const imageReadingDebugOutput = "imageReadingDebugOutput.xml";
-const char * const RGBimageReadingDebugOutput = "RGBimageReadingDebugOutput.xml";
-const char * const grayImageReadingDebugOutput = "grayImageReadingDebugOutput.xml";
+const char * const descriptorDebugOutput = "descriptorDebugOutput.xml";
 
 #endif

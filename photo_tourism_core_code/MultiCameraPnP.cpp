@@ -14,7 +14,7 @@
 using namespace std;
 
 MultiCameraPnP::MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
-               const std::vector<std::string>& imgs_names_):imgs_names(imgs_names_)
+                               const std::vector<std::string>& imgs_names_):imgs_names(imgs_names_)
 {
     //normalize images begins
     for (unsigned int i=0; i<imgs_.size(); i++) {
@@ -81,4 +81,13 @@ MultiCameraPnP::MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
     //initialize camera matrices ends
     
     
+}
+
+
+void MultiCameraPnP::RecoverDepthFromImages(){
+    OnlyMatchFeatures();
+}
+
+void MultiCameraPnP::OnlyMatchFeatures(){
+    feature_matcher = new FeatureMatcher(imgs,imgpts);
 }

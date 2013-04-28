@@ -11,6 +11,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <utility>
+#include "FeatureMatcher.h"
 
 class MultiCameraPnP {
     
@@ -20,6 +21,13 @@ public:
                    const std::vector<std::string>& imgs_names_);
     void RecoverDepthFromImages();
 private:
+    //private functions
+    void OnlyMatchFeatures();
+    
+    
+    
+    
+    //private variables
     std::vector<cv::Mat> imgs;
 	std::vector<std::string> imgs_names;
     std::vector<cv::Mat_<cv::Vec3b> > imgs_orig;
@@ -35,6 +43,9 @@ private:
 	cv::Mat distcoeff_32f;
 	cv::Mat K_32f;
 
+    cv::Ptr<FeatureMatcher> feature_matcher;
+    
+    
     
     
 };

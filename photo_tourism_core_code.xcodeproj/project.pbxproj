@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2A658888172D3DB30076CDD8 /* helper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A658886172D3DB30076CDD8 /* helper.cpp */; };
 		2A91EC4C172D47E00038F7BA /* MultiCameraPnP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A91EC4A172D47E00038F7BA /* MultiCameraPnP.cpp */; };
+		2A91EC5C172D52E50038F7BA /* FeatureMatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A91EC5A172D52E50038F7BA /* FeatureMatcher.cpp */; };
 		2AA7FE8D172D02C8004897B3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AA7FE8C172D02C8004897B3 /* main.cpp */; };
 		2AA7FE8F172D02C8004897B3 /* photo_tourism_core_code.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2AA7FE8E172D02C8004897B3 /* photo_tourism_core_code.1 */; };
 /* End PBXBuildFile section */
@@ -32,6 +33,8 @@
 		2A658887172D3DB30076CDD8 /* helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = helper.h; sourceTree = "<group>"; };
 		2A91EC4A172D47E00038F7BA /* MultiCameraPnP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MultiCameraPnP.cpp; sourceTree = "<group>"; };
 		2A91EC4B172D47E00038F7BA /* MultiCameraPnP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MultiCameraPnP.h; sourceTree = "<group>"; };
+		2A91EC5A172D52E50038F7BA /* FeatureMatcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FeatureMatcher.cpp; sourceTree = "<group>"; };
+		2A91EC5B172D52E50038F7BA /* FeatureMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FeatureMatcher.h; sourceTree = "<group>"; };
 		2AA7FE88172D02C8004897B3 /* photo_tourism_core_code */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = photo_tourism_core_code; sourceTree = BUILT_PRODUCTS_DIR; };
 		2AA7FE8C172D02C8004897B3 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		2AA7FE8E172D02C8004897B3 /* photo_tourism_core_code.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = photo_tourism_core_code.1; sourceTree = "<group>"; };
@@ -74,6 +77,8 @@
 				2A658887172D3DB30076CDD8 /* helper.h */,
 				2A91EC4A172D47E00038F7BA /* MultiCameraPnP.cpp */,
 				2A91EC4B172D47E00038F7BA /* MultiCameraPnP.h */,
+				2A91EC5A172D52E50038F7BA /* FeatureMatcher.cpp */,
+				2A91EC5B172D52E50038F7BA /* FeatureMatcher.h */,
 			);
 			path = photo_tourism_core_code;
 			sourceTree = "<group>";
@@ -132,6 +137,7 @@
 				2AA7FE8D172D02C8004897B3 /* main.cpp in Sources */,
 				2A658888172D3DB30076CDD8 /* helper.cpp in Sources */,
 				2A91EC4C172D47E00038F7BA /* MultiCameraPnP.cpp in Sources */,
+				2A91EC5C172D52E50038F7BA /* FeatureMatcher.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -205,6 +211,7 @@
 					"-lopencv_core",
 					"-lopencv_highgui",
 					"-lopencv_imgproc",
+					"-lopencv_features2d",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -222,6 +229,7 @@
 					"-lopencv_core",
 					"-lopencv_highgui",
 					"-lopencv_imgproc",
+					"-lopencv_features2d",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
