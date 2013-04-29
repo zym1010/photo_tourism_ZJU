@@ -11,9 +11,11 @@
 #include <sstream>
 #include "helper.h"
 #include "FindCameraMatrices.h"
+#include "Triangulation.h"
 
 
 using namespace std;
+static bool sort_by_first(pair<int,pair<int,int> > a, pair<int,pair<int,int> > b) { return a.first > b.first; }
 
 MultiCameraPnP::MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
                                const std::vector<std::string>& imgs_names_):imgs_names(imgs_names_)
@@ -90,6 +92,9 @@ void MultiCameraPnP::RecoverDepthFromImages(){
     OnlyMatchFeatures();
     
     PruneMatchesBasedOnF();
+    
+    GetBaseLineTriangulation();
+    
 }
 
 void MultiCameraPnP::OnlyMatchFeatures(){
@@ -178,4 +183,259 @@ void MultiCameraPnP::PruneMatchesBasedOnF() {
     cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
     
+}
+
+void MultiCameraPnP::GetBaseLineTriangulation(){
+    //ZYM: two base extrinsic matrix
+	cv::Matx34d P(1,0,0,0,
+				  0,1,0,0,
+				  0,0,1,0),
+    P1(1,0,0,0,
+       0,1,0,0,
+       0,0,1,0);
+    
+    
+    std::vector<CloudPoint> tmp_pcloud;
+    
+    list<pair<int,pair<int,int> > > matches_sizes;
+	//TODO: parallelize!
+    //ZYM: this iterator is for matches_matrix
+	for(std::map<std::pair<int,int> ,std::vector<cv::DMatch> >::iterator i = matches_matrix.begin(); i != matches_matrix.end(); ++i) {
+        matches_sizes.push_back(make_pair((*i).second.size(),(*i).first));
+        
+	}
+	cout << endl;
+	matches_sizes.sort(sort_by_first);
+    
+    
+    
+    //Reconstruct from two views
+	bool goodF = false;
+    
+    m_first_view = m_second_view = 0;
+    
+    for(list<pair<int,pair<int,int> > >::iterator highest_pair = matches_sizes.begin();
+		highest_pair != matches_sizes.end() && !goodF; //ZYM: stop unless we find good F or there's no more pair to be tried.
+		++highest_pair)
+	{
+        //ZYM:first 'second' means the image pair.
+        //ZYM: wierd that m_second_view and m_first_view are reversed.
+		m_second_view = (*highest_pair).second.second;
+		m_first_view  = (*highest_pair).second.first;
+        
+        
+#ifdef PHOTO_TOURISM_DEBUG
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << " -------- " << imgs_names[m_first_view] << "(" << m_first_view << ")"
+        << " and " << imgs_names[m_second_view] <<  "(" << m_second_view << ")"
+        << " -------- " << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+#endif
+        
+//		std::cout << " -------- " << imgs_names[m_first_view] << " and " << imgs_names[m_second_view] << " -------- " <<std::endl;//ZYM: a prompt showing two images being used for base triangulation
+        
+		//what if reconstrcution of first two views is bad? fallback to another pair
+		//See if the Fundamental Matrix between these two views is good
+        
+        //ZYM: this is most important and most complicated
+        //ZYM: K, Kinv are intrinstic matrix and its inverse,
+        //ZYM:imgpts are original matched points (using cross-checking and brute force matching)
+        //ZYM: imgpts_good are mached points using RANSAC 8-point to prune.
+		goodF = FindCameraMatrices(K, Kinv, distortion_coeff,//ZYM: all const
+                                   imgpts[m_first_view], //ZYM: const
+                                   imgpts[m_second_view], //ZYM: const
+                                   imgpts_good[m_first_view], //ZYM: not const
+                                   imgpts_good[m_second_view], //ZYM: not const
+                                   P, //ZYM: not const
+                                   P1, //ZYM: not const
+                                   matches_matrix[std::make_pair(m_first_view,m_second_view)], //ZYM: not const
+                                   tmp_pcloud //ZYM: not const
+                                   );
+        
+        //ZYM: trick to fix base triangulation
+        if(imgs_names[m_first_view]!="middle.jpg" || imgs_names[m_second_view]!="right1.png"){
+            goodF = false;
+        }
+        
+        //ZYM: I think this is not necessary for us to understand, as long as we have the matrix
+		if (goodF) {
+			vector<CloudPoint> new_triangulated;
+			vector<int> add_to_cloud;
+            
+			Pmats[m_first_view] = P;
+			Pmats[m_second_view] = P1;
+            
+			bool good_triangulation = TriangulatePointsBetweenViews(m_second_view,m_first_view,new_triangulated,add_to_cloud);
+			if(!good_triangulation || cv::countNonZero(add_to_cloud) < 10) {
+//				std::cout << "triangulation failed" << std::endl;
+				goodF = false;
+				Pmats[m_first_view] = 0;
+				Pmats[m_second_view] = 0;
+				m_second_view++;
+			} else {
+//				std::cout << "before triangulation: " << pcloud.size();
+				for (unsigned int j=0; j<add_to_cloud.size(); j++) {
+					if(add_to_cloud[j] == 1)
+						pcloud.push_back(new_triangulated[j]);
+				}
+//				std::cout << " after " << pcloud.size() << std::endl;
+			}
+		}
+        
+        
+	}
+    
+    
+    //ZYM: succeed
+#ifdef PHOTO_TOURISM_DEBUG
+    cerr << "======DEBUGGING INFO BEGINS======" << endl;
+    cerr << "Taking baseline from " << imgs_names[m_first_view] << " and " << imgs_names[m_second_view] << endl;
+    cerr << "======DEBUGGING INFO ENDS======" << endl;
+#endif
+	
+#ifdef PHOTO_TOURISM_DEBUG
+    cerr << "======DEBUGGING INFO BEGINS======" << endl;
+    cerr << "output project matrices" << endl;
+    
+    cv::FileStorage f;
+    f.open(baselineTriangulationDebugOutput, cv::FileStorage::WRITE);
+    f << "P" << cv::Mat(Pmats[m_first_view]);
+    f << "P1" << cv::Mat(Pmats[m_second_view]);
+    f.release();
+    cerr << "======DEBUGGING INFO ENDS======" << endl;
+#endif
+    
+}
+
+
+bool MultiCameraPnP::TriangulatePointsBetweenViews(
+                                                   int working_view,
+                                                   int older_view,
+                                                   vector<struct CloudPoint>& new_triangulated,
+                                                   vector<int>& add_to_cloud
+                                                   )
+{
+//	cout << " Triangulate " << imgs_names[working_view] << " and " << imgs_names[older_view] << endl;
+	//get the left camera matrix
+	//TODO: potential bug - the P mat for <view> may not exist? or does it...
+	cv::Matx34d P = Pmats[older_view];
+	cv::Matx34d P1 = Pmats[working_view];
+    
+	std::vector<cv::KeyPoint> pt_set1,pt_set2;
+	std::vector<cv::DMatch> matches = matches_matrix[std::make_pair(older_view,working_view)];
+	GetAlignedPointsFromMatch(imgpts[older_view],imgpts[working_view],matches,pt_set1,pt_set2);
+    
+    
+	//adding more triangulated points to general cloud
+	double reproj_error = TriangulatePoints(pt_set1, pt_set2, K, Kinv, distortion_coeff, P, P1, new_triangulated, correspImg1Pt);
+#ifdef PHOTO_TOURISM_DEBUG
+    cerr << "======DEBUGGING INFO BEGINS======" << endl;
+    cerr << "triangulation reproj error " << reproj_error << endl;
+    cerr << "======DEBUGGING INFO ENDS======" << endl;
+#endif
+	vector<uchar> trig_status;
+	if(!TestTriangulation(new_triangulated, P, trig_status) || !TestTriangulation(new_triangulated, P1, trig_status)) {
+		cerr << "Triangulation did not succeed" << endl;
+		return false;
+	}
+    //	if(reproj_error > 20.0) {
+    //		// somethign went awry, delete those triangulated points
+    //		//				pcloud.resize(start_i);
+    //		cerr << "reprojection error too high, don't include these points."<<endl;
+    //		return false;
+    //	}
+    
+	//filter out outlier points with high reprojection
+	vector<double> reprj_errors;
+	for(int i=0;i<new_triangulated.size();i++) { reprj_errors.push_back(new_triangulated[i].reprojection_error); }
+	std::sort(reprj_errors.begin(),reprj_errors.end());
+	//get the 80% precentile
+	double reprj_err_cutoff = reprj_errors[4 * reprj_errors.size() / 5] * 2.4; //threshold from Snavely07 4.2
+	
+	vector<CloudPoint> new_triangulated_filtered;
+	std::vector<cv::DMatch> new_matches;
+	for(int i=0;i<new_triangulated.size();i++) {
+		if(trig_status[i] == 0)
+			continue; //point was not in front of camera
+		if(new_triangulated[i].reprojection_error > 16.0) {
+			continue; //reject point
+		}
+		if(new_triangulated[i].reprojection_error < 4.0 ||
+           new_triangulated[i].reprojection_error < reprj_err_cutoff)
+		{
+			new_triangulated_filtered.push_back(new_triangulated[i]);
+			new_matches.push_back(matches[i]);
+		}
+		else
+		{
+			continue;
+		}
+	}
+    
+//	cout << "filtered out " << (new_triangulated.size() - new_triangulated_filtered.size()) << " high-error points" << endl;
+    
+	//all points filtered?
+	if(new_triangulated_filtered.size() <= 0) return false;
+	
+	new_triangulated = new_triangulated_filtered;
+	
+	matches = new_matches;
+	matches_matrix[std::make_pair(older_view,working_view)] = new_matches; //just to make sure, remove if unneccesary
+	matches_matrix[std::make_pair(working_view,older_view)] = FlipMatches(new_matches);
+	add_to_cloud.clear();
+	add_to_cloud.resize(new_triangulated.size(),1);
+	int found_other_views_count = 0;
+	unsigned long num_views = imgs.size();
+    
+	//scan new triangulated points, if they were already triangulated before - strengthen cloud
+	//#pragma omp parallel for num_threads(1)
+	for (int j = 0; j<new_triangulated.size(); j++) {
+		new_triangulated[j].imgpt_for_img = std::vector<int>(imgs.size(),-1);
+        
+		//matches[j] corresponds to new_triangulated[j]
+		//matches[j].queryIdx = point in <older_view>
+		//matches[j].trainIdx = point in <working_view>
+		new_triangulated[j].imgpt_for_img[older_view] = matches[j].queryIdx;	//2D reference to <older_view>
+		new_triangulated[j].imgpt_for_img[working_view] = matches[j].trainIdx;		//2D reference to <working_view>
+		bool found_in_other_view = false;
+		for (unsigned int view_ = 0; view_ < num_views; view_++) {
+			if(view_ != older_view) {
+				//Look for points in <view_> that match to points in <working_view>
+				std::vector<cv::DMatch> submatches = matches_matrix[std::make_pair(view_,working_view)];
+				for (unsigned int ii = 0; ii < submatches.size(); ii++) {
+					if (submatches[ii].trainIdx == matches[j].trainIdx &&
+						!found_in_other_view)
+					{
+						//Point was already found in <view_> - strengthen it in the known cloud, if it exists there
+                        
+						//cout << "2d pt " << submatches[ii].queryIdx << " in img " << view_ << " matched 2d pt " << submatches[ii].trainIdx << " in img " << i << endl;
+						for (unsigned int pt3d=0; pt3d<pcloud.size(); pt3d++) {
+							if (pcloud[pt3d].imgpt_for_img[view_] == submatches[ii].queryIdx)
+							{
+								//pcloud[pt3d] - a point that has 2d reference in <view_>
+                                
+								//cout << "3d point "<<pt3d<<" in cloud, referenced 2d pt " << submatches[ii].queryIdx << " in view " << view_ << endl;
+#pragma omp critical
+								{
+									pcloud[pt3d].imgpt_for_img[working_view] = matches[j].trainIdx;
+									pcloud[pt3d].imgpt_for_img[older_view] = matches[j].queryIdx;
+									found_in_other_view = true;
+									add_to_cloud[j] = 0;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+#pragma omp critical
+		{
+			if (found_in_other_view) {
+				found_other_views_count++;
+			} else {
+				add_to_cloud[j] = 1;
+			}
+		}
+	}
+	return true;
 }

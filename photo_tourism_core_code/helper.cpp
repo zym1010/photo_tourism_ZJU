@@ -12,6 +12,14 @@
 
 using namespace std;
 
+std::vector<cv::Point3d> CloudPointsToPoints(const std::vector<CloudPoint> cpts) {
+	std::vector<cv::Point3d> out;
+	for (unsigned int i=0; i<cpts.size(); i++) {
+		out.push_back(cpts[i].pt);
+	}
+	return out;
+}
+
 void KeyPointsToPoints(const std::vector<cv::KeyPoint>& kps, std::vector<cv::Point2f>& ps){//ZYM: understood.
 	ps.clear();
 	for (unsigned int i=0; i<kps.size(); i++) ps.push_back(kps[i].pt);

@@ -25,4 +25,12 @@ void GetAlignedPointsFromMatch(const std::vector<cv::KeyPoint>& imgpts1,
 							   std::vector<cv::KeyPoint>& pt_set1,
 							   std::vector<cv::KeyPoint>& pt_set2);
 
+struct CloudPoint {
+	cv::Point3d pt;
+	std::vector<int> imgpt_for_img;
+	double reprojection_error;
+};
+
+std::vector<cv::Point3d> CloudPointsToPoints(const std::vector<CloudPoint> cpts);
+
 #endif /* defined(__photo_tourism_core_code__helper__) */

@@ -24,8 +24,13 @@ private:
     //private functions
     void OnlyMatchFeatures();
     void PruneMatchesBasedOnF();
-    
-    
+    void GetBaseLineTriangulation();
+    bool TriangulatePointsBetweenViews(
+                                       int working_view,
+                                       int second_view,
+                                       std::vector<struct CloudPoint>& new_triangulated,
+                                       std::vector<int>& add_to_cloud
+                                       );
     
     //private variables
     std::vector<cv::Mat> imgs;
@@ -44,11 +49,17 @@ private:
 	cv::Mat K_32f;
     
     std::map<std::pair<int,int> ,std::vector<cv::DMatch> > matches_matrix;
-
+    std::vector<CloudPoint> pcloud;
     cv::Ptr<FeatureMatcher> feature_matcher;
     
-
     
+    //
+    int m_first_view;
+	int m_second_view; //baseline's second view other to 0
+    
+
+    std::map<int,cv::Matx34d> Pmats;
+    std::vector<cv::KeyPoint> correspImg1Pt; //TODO: remove
 };
 
 #endif /* defined(__photo_tourism_core_code__MultiCameraPnP__) */
