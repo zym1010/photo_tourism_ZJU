@@ -23,24 +23,26 @@ void static TakeSVDOfE(Mat_<double>& E, Mat& svd_u, Mat& svd_vt, Mat& svd_w) {
 	svd_vt = svd.vt;
 	svd_w = svd.w;
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "----------------------- SVD ------------------------\n";
-	cerr << "U:\n"<<svd_u<<"\nW:\n"<<svd_w<<"\nVt:\n"<<svd_vt<<endl;
-	cerr << "----------------------------------------------------\n";
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "----------------------- SVD ------------------------\n";
+        cerr << "U:\n"<<svd_u<<"\nW:\n"<<svd_w<<"\nVt:\n"<<svd_vt<<endl;
+        cerr << "----------------------------------------------------\n";
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
 }
 
 
 
 bool static DecomposeEtoRandT(
-                       Mat_<double>& E,
-                       Mat_<double>& R1,
-                       Mat_<double>& R2,
-                       Mat_<double>& t1,
-                       Mat_<double>& t2)
+                              Mat_<double>& E,
+                              Mat_<double>& R1,
+                              Mat_<double>& R2,
+                              Mat_<double>& t1,
+                              Mat_<double>& t2)
 {
-
+    
 	//Using HZ E decomposition
 	Mat svd_u, svd_vt, svd_w;
 	TakeSVDOfE(E,svd_u,svd_vt,svd_w);
@@ -55,8 +57,8 @@ bool static DecomposeEtoRandT(
 	R2 = svd_u * Mat(Wt) * svd_vt; //HZ 9.19
 	t1 = svd_u.col(2); //u3
 	t2 = -svd_u.col(2); //u3
-
-
+    
+    
 	return true;
 }
 
@@ -100,9 +102,11 @@ cv::Mat GetFundamentalMat(const std::vector<cv::KeyPoint>& imgpts1,
     vector<DMatch> new_matches;
     
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "F keeping " << cv::countNonZero(status) << " / " << status.size() << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "F keeping " << cv::countNonZero(status) << " / " << status.size() << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
     
     for (unsigned int i=0; i<status.size(); i++) {
@@ -137,111 +141,110 @@ bool FindCameraMatrices(const Mat& K,
 						)
 {
 	//Find camera matrices
-	{
+    
+    //ZYM: repetition again........
+    //ZYM: now we get the F between these two images.
+    //ZYM: P2 * F * P1 = 0.
+    Mat F = GetFundamentalMat(imgpts1,imgpts2,imgpts1_good,imgpts2_good,matches);
+    //ZYM: now the matches are being used. In fact, I think here's a bug, since matches will be changed.
+    //ZYM: check if we have enough number of matches.
+    if(matches.size() < 100) { // || ((double)imgpts1_good.size() / (double)imgpts1.size()) < 0.25
+        cerr << "not enough inliers after F matrix" << endl;
+        return false;
+    }
+    
+    
+    
+    //Essential matrix: compute then extract cameras [R|t]
+    Mat_<double> E = K.t() * F * K; //according to HZ (9.12)
+    
+    //according to http://en.wikipedia.org/wiki/Essential_matrix#Properties_of_the_essential_matrix
+    //ZYM: I think here R_ and t_ corresponds to all possible R's and t's.
+    Mat_<double> R1(3,3);
+    Mat_<double> R2(3,3);
+    Mat_<double> t1(1,3);
+    Mat_<double> t2(1,3);
+    
+    
+    //        Mat_<double> rotation_vector(3,1);
+    
+    //decompose E to P' , HZ (9.19)
+    //ZYM: This is the most useful part.
+    {
         
-        //ZYM: repetition again........
-        //ZYM: now we get the F between these two images.
-        //ZYM: P2 * F * P1 = 0.
-		Mat F = GetFundamentalMat(imgpts1,imgpts2,imgpts1_good,imgpts2_good,matches);
-        //ZYM: now the matches are being used. In fact, I think here's a bug, since matches will be changed.
-        //ZYM: check if we have enough number of matches.
-		if(matches.size() < 100) { // || ((double)imgpts1_good.size() / (double)imgpts1.size()) < 0.25
-			cerr << "not enough inliers after F matrix" << endl;
-			return false;
-		}
-		
+        //ZYM: what we modify is P1.
+        if (!DecomposeEtoRandT(E,R1,R2,t1,t2)) return false;
         
         
-		//Essential matrix: compute then extract cameras [R|t]
-		Mat_<double> E = K.t() * F * K; //according to HZ (9.12)
-        
-		//according to http://en.wikipedia.org/wiki/Essential_matrix#Properties_of_the_essential_matrix
-		//ZYM: I think here R_ and t_ corresponds to all possible R's and t's.
-		Mat_<double> R1(3,3);
-		Mat_<double> R2(3,3);
-		Mat_<double> t1(1,3);
-		Mat_<double> t2(1,3);
+        //ZYM: flip the sign of E.
+        if(determinant(R1)+1.0 < 1e-09) {
+            //according to http://en.wikipedia.org/wiki/Essential_matrix#Showing_that_it_is_valid
+            //				cout << "det(R) == -1 ["<<determinant(R1)<<"]: flip E's sign" << endl;
+            E = -E;
+            DecomposeEtoRandT(E,R1,R2,t1,t2);
+        }
         
         
-//        Mat_<double> rotation_vector(3,1);
+        //ZYM: first possibility of P1, using R1 and t1.
+        P1 = Matx34d(R1(0,0),	R1(0,1),	R1(0,2),	t1(0),
+                     R1(1,0),	R1(1,1),	R1(1,2),	t1(1),
+                     R1(2,0),	R1(2,1),	R1(2,2),	t1(2));
+        //			cout << "Testing P1 " << endl << Mat(P1) << endl;
+        //            Rodrigues(R1, rotation_vector);
+        //            cout << "rotation vector " << endl << rotation_vector << endl;
         
-		//decompose E to P' , HZ (9.19)
-        //ZYM: This is the most useful part.
-		{
+        
+        vector<CloudPoint> pcloud,pcloud1; vector<KeyPoint> corresp;
+        double reproj_error1 = TriangulatePoints(imgpts1_good, imgpts2_good, K, Kinv, distcoeff, P, P1, pcloud, corresp);
+        double reproj_error2 = TriangulatePoints(imgpts2_good, imgpts1_good, K, Kinv, distcoeff, P1, P, pcloud1, corresp);
+        vector<uchar> tmp_status;
+        //check if pointa are triangulated --in front-- of cameras for all 4 ambiguations
+        if (!TestTriangulation(pcloud,P1,tmp_status) || !TestTriangulation(pcloud1,P,tmp_status) || reproj_error1 > reprojectionErrorThreshold || reproj_error2 > reprojectionErrorThreshold) {
             
-            //ZYM: what we modify is P1.
-			if (!DecomposeEtoRandT(E,R1,R2,t1,t2)) return false;
+            //ZYM: second possibility of P1, using R1 and t2.
+            P1 = Matx34d(R1(0,0),	R1(0,1),	R1(0,2),	t2(0),
+                         R1(1,0),	R1(1,1),	R1(1,2),	t2(1),
+                         R1(2,0),	R1(2,1),	R1(2,2),	t2(2));
             
+            pcloud.clear(); pcloud1.clear(); corresp.clear();
+            reproj_error1 = TriangulatePoints(imgpts1_good, imgpts2_good, K, Kinv, distcoeff, P, P1, pcloud, corresp);
+            reproj_error2 = TriangulatePoints(imgpts2_good, imgpts1_good, K, Kinv, distcoeff, P1, P, pcloud1, corresp);
             
-            //ZYM: flip the sign of E.
-			if(determinant(R1)+1.0 < 1e-09) {
-				//according to http://en.wikipedia.org/wiki/Essential_matrix#Showing_that_it_is_valid
-//				cout << "det(R) == -1 ["<<determinant(R1)<<"]: flip E's sign" << endl;
-				E = -E;
-				DecomposeEtoRandT(E,R1,R2,t1,t2);
-			}
-            
-            
-			//ZYM: first possibility of P1, using R1 and t1.
-			P1 = Matx34d(R1(0,0),	R1(0,1),	R1(0,2),	t1(0),
-						 R1(1,0),	R1(1,1),	R1(1,2),	t1(1),
-						 R1(2,0),	R1(2,1),	R1(2,2),	t1(2));
-//			cout << "Testing P1 " << endl << Mat(P1) << endl;
-//            Rodrigues(R1, rotation_vector);
-//            cout << "rotation vector " << endl << rotation_vector << endl;
-			
-            
-			vector<CloudPoint> pcloud,pcloud1; vector<KeyPoint> corresp;
-			double reproj_error1 = TriangulatePoints(imgpts1_good, imgpts2_good, K, Kinv, distcoeff, P, P1, pcloud, corresp);
-			double reproj_error2 = TriangulatePoints(imgpts2_good, imgpts1_good, K, Kinv, distcoeff, P1, P, pcloud1, corresp);
-			vector<uchar> tmp_status;
-			//check if pointa are triangulated --in front-- of cameras for all 4 ambiguations
-			if (!TestTriangulation(pcloud,P1,tmp_status) || !TestTriangulation(pcloud1,P,tmp_status) || reproj_error1 > reprojectionErrorThreshold || reproj_error2 > reprojectionErrorThreshold) {
+            if (!TestTriangulation(pcloud,P1,tmp_status) || !TestTriangulation(pcloud1,P,tmp_status) || reproj_error1 > reprojectionErrorThreshold || reproj_error2 > reprojectionErrorThreshold) {
                 
-                //ZYM: second possibility of P1, using R1 and t2.
-				P1 = Matx34d(R1(0,0),	R1(0,1),	R1(0,2),	t2(0),
-							 R1(1,0),	R1(1,1),	R1(1,2),	t2(1),
-							 R1(2,0),	R1(2,1),	R1(2,2),	t2(2));
-
-				pcloud.clear(); pcloud1.clear(); corresp.clear();
-				reproj_error1 = TriangulatePoints(imgpts1_good, imgpts2_good, K, Kinv, distcoeff, P, P1, pcloud, corresp);
-				reproj_error2 = TriangulatePoints(imgpts2_good, imgpts1_good, K, Kinv, distcoeff, P1, P, pcloud1, corresp);
-				
-				if (!TestTriangulation(pcloud,P1,tmp_status) || !TestTriangulation(pcloud1,P,tmp_status) || reproj_error1 > reprojectionErrorThreshold || reproj_error2 > reprojectionErrorThreshold) {
-
-					
-                    //ZYM: third possibility of P1, using R2 and t1.
-					P1 = Matx34d(R2(0,0),	R2(0,1),	R2(0,2),	t1(0),
-								 R2(1,0),	R2(1,1),	R2(1,2),	t1(1),
-								 R2(2,0),	R2(2,1),	R2(2,2),	t1(2));
-
-					pcloud.clear(); pcloud1.clear(); corresp.clear();
-					reproj_error1 = TriangulatePoints(imgpts1_good, imgpts2_good, K, Kinv, distcoeff, P, P1, pcloud, corresp);
-					reproj_error2 = TriangulatePoints(imgpts2_good, imgpts1_good, K, Kinv, distcoeff, P1, P, pcloud1, corresp);
-					
-					if (!TestTriangulation(pcloud,P1,tmp_status) || !TestTriangulation(pcloud1,P,tmp_status) || reproj_error1 > reprojectionErrorThreshold || reproj_error2 > reprojectionErrorThreshold) {
-                        
-                        //ZYM: fourth possibility of P1, using R2 and t2.
-						P1 = Matx34d(R2(0,0),	R2(0,1),	R2(0,2),	t2(0),
-									 R2(1,0),	R2(1,1),	R2(1,2),	t2(1),
-									 R2(2,0),	R2(2,1),	R2(2,2),	t2(2));
-
-						pcloud.clear(); pcloud1.clear(); corresp.clear();
-						reproj_error1 = TriangulatePoints(imgpts1_good, imgpts2_good, K, Kinv, distcoeff, P, P1, pcloud, corresp);
-						reproj_error2 = TriangulatePoints(imgpts2_good, imgpts1_good, K, Kinv, distcoeff, P1, P, pcloud1, corresp);
-						
-						if (!TestTriangulation(pcloud,P1,tmp_status) || !TestTriangulation(pcloud1,P,tmp_status) || reproj_error1 > reprojectionErrorThreshold || reproj_error2 > reprojectionErrorThreshold) {
-//							cout << "Shit." << endl;
-							return false;
-						}
-					}
-				}
-			}
-			for (unsigned int i=0; i<pcloud.size(); i++) {
-				outCloud.push_back(pcloud[i]);
-			}
-		}
-	}
+                
+                //ZYM: third possibility of P1, using R2 and t1.
+                P1 = Matx34d(R2(0,0),	R2(0,1),	R2(0,2),	t1(0),
+                             R2(1,0),	R2(1,1),	R2(1,2),	t1(1),
+                             R2(2,0),	R2(2,1),	R2(2,2),	t1(2));
+                
+                pcloud.clear(); pcloud1.clear(); corresp.clear();
+                reproj_error1 = TriangulatePoints(imgpts1_good, imgpts2_good, K, Kinv, distcoeff, P, P1, pcloud, corresp);
+                reproj_error2 = TriangulatePoints(imgpts2_good, imgpts1_good, K, Kinv, distcoeff, P1, P, pcloud1, corresp);
+                
+                if (!TestTriangulation(pcloud,P1,tmp_status) || !TestTriangulation(pcloud1,P,tmp_status) || reproj_error1 > reprojectionErrorThreshold || reproj_error2 > reprojectionErrorThreshold) {
+                    
+                    //ZYM: fourth possibility of P1, using R2 and t2.
+                    P1 = Matx34d(R2(0,0),	R2(0,1),	R2(0,2),	t2(0),
+                                 R2(1,0),	R2(1,1),	R2(1,2),	t2(1),
+                                 R2(2,0),	R2(2,1),	R2(2,2),	t2(2));
+                    
+                    pcloud.clear(); pcloud1.clear(); corresp.clear();
+                    reproj_error1 = TriangulatePoints(imgpts1_good, imgpts2_good, K, Kinv, distcoeff, P, P1, pcloud, corresp);
+                    reproj_error2 = TriangulatePoints(imgpts2_good, imgpts1_good, K, Kinv, distcoeff, P1, P, pcloud1, corresp);
+                    
+                    if (!TestTriangulation(pcloud,P1,tmp_status) || !TestTriangulation(pcloud1,P,tmp_status) || reproj_error1 > reprojectionErrorThreshold || reproj_error2 > reprojectionErrorThreshold) {
+                        //							cout << "Shit." << endl;
+                        return false;
+                    }
+                }
+            }
+        }
+        for (unsigned int i=0; i<pcloud.size(); i++) {
+            outCloud.push_back(pcloud[i]);
+        }
+    }
+	
 	return true;
 }
 

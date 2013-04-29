@@ -32,13 +32,15 @@ int main(int argc, const char * argv[])
     }
     
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "path of the images: " << argv[1] << endl;
-    cerr << "scale factor: " << downscale_factor << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "path of the images: " << argv[1] << endl;
+        cerr << "scale factor: " << downscale_factor << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
     //read argument ends.
-
+    
     
     std::vector<cv::Mat> images; //saves scaled images (not necessarily 3 channel, 8bit Unsigned)
     std::vector<std::string> images_names; //saves file names (without dir)
@@ -53,20 +55,22 @@ int main(int argc, const char * argv[])
 	}
     
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "write images to file begins" << endl;
-    cv::FileStorage f;
-    f.open(imageReadingDebugOutput, cv::FileStorage::WRITE);
-    
-    for (unsigned i = 0; i < images.size(); i++) {
-        stringstream ss;
-        ss << "img" << i; //names must begin with a letter
-        cerr << ss.str() << endl;
-        f << ss.str() << images[i];
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write images to file begins" << endl;
+        cv::FileStorage f;
+        f.open(imageReadingDebugOutput, cv::FileStorage::WRITE);
+        
+        for (unsigned i = 0; i < images.size(); i++) {
+            stringstream ss;
+            ss << "img" << i; //names must begin with a letter
+            cerr << ss.str() << endl;
+            f << ss.str() << images[i];
+        }
+        f.release();
+        cerr << "write images to file ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
     }
-    f.release();
-    cerr << "write images to file ends" << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
     
     //read images ends.

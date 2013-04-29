@@ -19,10 +19,10 @@ using namespace cv;
  From "Triangulation", Hartley, R.I. and Sturm, P., Computer vision and image understanding, 1997
  */
 static Mat_<double> LinearLSTriangulation(Point3d u,		//homogenous image point (u,v,1)
-								   Matx34d P,		//camera 1 matrix
-								   Point3d u1,		//homogenous image point in 2nd camera
-								   Matx34d P1		//camera 2 matrix
-								   )
+                                          Matx34d P,		//camera 1 matrix
+                                          Point3d u1,		//homogenous image point in 2nd camera
+                                          Matx34d P1		//camera 2 matrix
+                                          )
 {
 	
 	//build matrix A for homogenous equation system Ax = 0
@@ -78,7 +78,7 @@ double TriangulatePoints(const vector<KeyPoint>& pt_set1,
     cout << "Triangulating...";
 	vector<double> reproj_error;
 	unsigned long pts_size = pt_set1.size();
-
+    
 	Mat_<double> KP1 = K * Mat(P1);
 #pragma omp parallel for num_threads(1)
 	for (int i=0; i<pts_size; i++) {
@@ -94,7 +94,7 @@ double TriangulatePoints(const vector<KeyPoint>& pt_set1,
 		
 		Mat_<double> X = IterativeLinearLSTriangulation(u,P,u1,P1);
 		
-
+        
 		Mat_<double> xPt_img = KP1 * X;				//reproject
 		Point2f xPt_img_((float)(xPt_img(0)/xPt_img(2)),(float)(xPt_img(1)/xPt_img(2)));
         
@@ -109,12 +109,12 @@ double TriangulatePoints(const vector<KeyPoint>& pt_set1,
 			
 			pointcloud.push_back(cp);
 			correspImg1Pt.push_back(pt_set1[i]);
-
+            
 		}
 	}
 	
 	Scalar mse = mean(reproj_error);
-
+    
     cout << "Done. ("<<pointcloud.size()<<"points, " << ", mean reproj err = " << mse[0] << ")"<< endl;
     
 	return mse[0];

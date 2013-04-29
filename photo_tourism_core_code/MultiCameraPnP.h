@@ -58,7 +58,7 @@ private:
     int m_first_view;
 	int m_second_view; //baseline's second view other to 0
     
-
+    
     std::map<int,cv::Matx34d> Pmats;
     std::vector<cv::KeyPoint> correspImg1Pt; //TODO: remove
 };

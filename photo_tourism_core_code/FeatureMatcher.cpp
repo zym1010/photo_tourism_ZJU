@@ -27,20 +27,22 @@ imgs(imgs_), imgpts(imgpts_){
     
     
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "write descriptors to file begins" << endl;
-    cv::FileStorage f;
-    f.open(descriptorDebugOutput, cv::FileStorage::WRITE);
-    
-    for (unsigned i = 0; i < descriptors.size(); i++) {
-        stringstream ss;
-        ss << "mat" << i; //names must begin with a letter
-        cerr << ss.str() << endl;
-        f << ss.str() << descriptors[i];
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write descriptors to file begins" << endl;
+        cv::FileStorage f;
+        f.open(descriptorDebugOutput, cv::FileStorage::WRITE);
+        
+        for (unsigned i = 0; i < descriptors.size(); i++) {
+            stringstream ss;
+            ss << "mat" << i; //names must begin with a letter
+            cerr << ss.str() << endl;
+            f << ss.str() << descriptors[i];
+        }
+        f.release();
+        cerr << "write descriptors to file ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
     }
-    f.release();
-    cerr << "write descriptors to file ends" << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
     
 }

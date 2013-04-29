@@ -41,20 +41,22 @@ MultiCameraPnP::MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
 	}
     
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "write RGB images to file begins" << endl;
-    for (unsigned i = 0; i < imgs_orig.size(); i++) {
-        cv::imwrite("RGB"+imgs_names[i], imgs_orig[i]);
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write RGB images to file begins" << endl;
+        for (unsigned i = 0; i < imgs_orig.size(); i++) {
+            cv::imwrite("RGB"+imgs_names[i], imgs_orig[i]);
+        }
+        cerr << "write RGB images to file ends" << endl;
+        
+        cerr << "write Gray images to file begins" << endl;
+        for (unsigned i = 0; i < imgs.size(); i++) {
+            cv::imwrite("Gray"+imgs_names[i], imgs[i]);
+        }
+        cerr << "write Gray images to file ends" << endl;
+        
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
     }
-    cerr << "write RGB images to file ends" << endl;
-    
-    cerr << "write Gray images to file begins" << endl;
-    for (unsigned i = 0; i < imgs.size(); i++) {
-        cv::imwrite("Gray"+imgs_names[i], imgs[i]);
-    }
-    cerr << "write Gray images to file ends" << endl;
-    
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
     
     //normalize images ends
@@ -76,10 +78,12 @@ MultiCameraPnP::MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
 	K.convertTo(K_32f,CV_32FC1); //ZYM: float version
     
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "cam_matrix: " << K << endl;
-    cerr << "cam_matrix inverted: " << Kinv << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "cam_matrix: " << K << endl;
+        cerr << "cam_matrix inverted: " << Kinv << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
     
     //initialize camera matrices ends
@@ -120,24 +124,26 @@ void MultiCameraPnP::OnlyMatchFeatures(){
     }
     
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "write match matrix to file begins" << endl;
-    cv::FileStorage f;
-    f.open(initialMatchMatrixDebugOutput, cv::FileStorage::WRITE);
-    f << "test_list" << "[";
-    for (unsigned i = 0; i < imgs.size()-1; i++) {
-        for (unsigned j = i+1; j < imgs.size(); j++) {
-            const std::vector<cv::DMatch> & current_match_vector = matches_matrix[std::make_pair(i,j)];
-            for (unsigned k = 0; k < current_match_vector.size(); k++) {
-                f << current_match_vector[k].queryIdx;
-                f << current_match_vector[k].trainIdx;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write match matrix to file begins" << endl;
+        cv::FileStorage f;
+        f.open(initialMatchMatrixDebugOutput, cv::FileStorage::WRITE);
+        f << "test_list" << "[";
+        for (unsigned i = 0; i < imgs.size()-1; i++) {
+            for (unsigned j = i+1; j < imgs.size(); j++) {
+                const std::vector<cv::DMatch> & current_match_vector = matches_matrix[std::make_pair(i,j)];
+                for (unsigned k = 0; k < current_match_vector.size(); k++) {
+                    f << current_match_vector[k].queryIdx;
+                    f << current_match_vector[k].trainIdx;
+                }
             }
         }
+        f << "]";
+        f.release();
+        cerr << "write match matrix to file ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
     }
-    f << "]";
-    f.release();
-    cerr << "write match matrix to file ends" << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
     
 }
@@ -163,24 +169,26 @@ void MultiCameraPnP::PruneMatchesBasedOnF() {
 		}
 	}
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "write match matrix to file begins" << endl;
-    cv::FileStorage f;
-    f.open(refinedMatchMatrixDebugOutput, cv::FileStorage::WRITE);
-    f << "test_list" << "[";
-    for (unsigned i = 0; i < imgs.size()-1; i++) {
-        for (unsigned j = i+1; j < imgs.size(); j++) {
-            const std::vector<cv::DMatch> & current_match_vector = matches_matrix[std::make_pair(i,j)];
-            for (unsigned k = 0; k < current_match_vector.size(); k++) {
-                f << current_match_vector[k].queryIdx;
-                f << current_match_vector[k].trainIdx;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write match matrix to file begins" << endl;
+        cv::FileStorage f;
+        f.open(refinedMatchMatrixDebugOutput, cv::FileStorage::WRITE);
+        f << "test_list" << "[";
+        for (unsigned i = 0; i < imgs.size()-1; i++) {
+            for (unsigned j = i+1; j < imgs.size(); j++) {
+                const std::vector<cv::DMatch> & current_match_vector = matches_matrix[std::make_pair(i,j)];
+                for (unsigned k = 0; k < current_match_vector.size(); k++) {
+                    f << current_match_vector[k].queryIdx;
+                    f << current_match_vector[k].trainIdx;
+                }
             }
         }
+        f << "]";
+        f.release();
+        cerr << "write match matrix to file ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
     }
-    f << "]";
-    f.release();
-    cerr << "write match matrix to file ends" << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
     
 }
@@ -225,11 +233,13 @@ void MultiCameraPnP::GetBaseLineTriangulation(){
         
         
 #ifdef PHOTO_TOURISM_DEBUG
-        cerr << "======DEBUGGING INFO BEGINS======" << endl;
-        cerr << " -------- " << imgs_names[m_first_view] << "(" << m_first_view << ")"
-        << " and " << imgs_names[m_second_view] <<  "(" << m_second_view << ")"
-        << " -------- " << endl;
-        cerr << "======DEBUGGING INFO ENDS======" << endl;
+        {
+            cerr << "======DEBUGGING INFO BEGINS======" << endl;
+            cerr << " -------- " << imgs_names[m_first_view] << "(" << m_first_view << ")"
+            << " and " << imgs_names[m_second_view] <<  "(" << m_second_view << ")"
+            << " -------- " << endl;
+            cerr << "======DEBUGGING INFO ENDS======" << endl;
+        }
 #endif
         
 		std::cout << " -------- " << imgs_names[m_first_view] << " and " << imgs_names[m_second_view] << " -------- " <<std::endl;//ZYM: a prompt showing two images being used for base triangulation
@@ -267,7 +277,7 @@ void MultiCameraPnP::GetBaseLineTriangulation(){
             
 			bool good_triangulation = TriangulatePointsBetweenViews(m_second_view,m_first_view,new_triangulated,add_to_cloud);
 			if(!good_triangulation || cv::countNonZero(add_to_cloud) < 10) {
-//				std::cout << "triangulation failed" << std::endl;
+                //				std::cout << "triangulation failed" << std::endl;
 				goodF = false;
 				Pmats[m_first_view] = 0;
 				Pmats[m_second_view] = 0;
@@ -288,21 +298,25 @@ void MultiCameraPnP::GetBaseLineTriangulation(){
     
     //ZYM: succeed
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "Taking baseline from " << imgs_names[m_first_view] << " and " << imgs_names[m_second_view] << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "Taking baseline from " << imgs_names[m_first_view] << " and " << imgs_names[m_second_view] << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
-	
-#ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "output project matrices" << endl;
     
-    cv::FileStorage f;
-    f.open(baselineTriangulationDebugOutput, cv::FileStorage::WRITE);
-    f << "P" << cv::Mat(Pmats[m_first_view]);
-    f << "P1" << cv::Mat(Pmats[m_second_view]);
-    f.release();
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+#ifdef PHOTO_TOURISM_DEBUG
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "output project matrices" << endl;
+        
+        cv::FileStorage f;
+        f.open(baselineTriangulationDebugOutput, cv::FileStorage::WRITE);
+        f << "P" << cv::Mat(Pmats[m_first_view]);
+        f << "P1" << cv::Mat(Pmats[m_second_view]);
+        f.release();
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
     
 }
@@ -329,15 +343,17 @@ bool MultiCameraPnP::TriangulatePointsBetweenViews(
 	//adding more triangulated points to general cloud
 	double reproj_error = TriangulatePoints(pt_set1, pt_set2, K, Kinv, distortion_coeff, P, P1, new_triangulated, correspImg1Pt);
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "triangulation reproj error " << reproj_error << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "triangulation reproj error " << reproj_error << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
-	vector<uchar> trig_status;
-	if(!TestTriangulation(new_triangulated, P, trig_status) || !TestTriangulation(new_triangulated, P1, trig_status)) {
-		cerr << "Triangulation did not succeed" << endl;
-		return false;
-	}
+    vector<uchar> trig_status;
+    if(!TestTriangulation(new_triangulated, P, trig_status) || !TestTriangulation(new_triangulated, P1, trig_status)) {
+        cerr << "Triangulation did not succeed" << endl;
+        return false;
+    }
     //	if(reproj_error > 20.0) {
     //		// somethign went awry, delete those triangulated points
     //		//				pcloud.resize(start_i);
@@ -345,127 +361,131 @@ bool MultiCameraPnP::TriangulatePointsBetweenViews(
     //		return false;
     //	}
     
-	//filter out outlier points with high reprojection
-	vector<double> reprj_errors;
-	for(int i=0;i<new_triangulated.size();i++) { reprj_errors.push_back(new_triangulated[i].reprojection_error); }
-	std::sort(reprj_errors.begin(),reprj_errors.end());
-	//get the 80% precentile
-	double reprj_err_cutoff = reprj_errors[4 * reprj_errors.size() / 5] * 2.4; //threshold from Snavely07 4.2
-	
-	vector<CloudPoint> new_triangulated_filtered;
-	std::vector<cv::DMatch> new_matches;
-	for(int i=0;i<new_triangulated.size();i++) {
-		if(trig_status[i] == 0)
-			continue; //point was not in front of camera
-		if(new_triangulated[i].reprojection_error > 16.0) {
-			continue; //reject point
-		}
-		if(new_triangulated[i].reprojection_error < 4.0 ||
+    //filter out outlier points with high reprojection
+    vector<double> reprj_errors;
+    for(int i=0;i<new_triangulated.size();i++) { reprj_errors.push_back(new_triangulated[i].reprojection_error); }
+    std::sort(reprj_errors.begin(),reprj_errors.end());
+    //get the 80% precentile
+    double reprj_err_cutoff = reprj_errors[4 * reprj_errors.size() / 5] * 2.4; //threshold from Snavely07 4.2
+    
+    vector<CloudPoint> new_triangulated_filtered;
+    std::vector<cv::DMatch> new_matches;
+    for(int i=0;i<new_triangulated.size();i++) {
+        if(trig_status[i] == 0)
+            continue; //point was not in front of camera
+        if(new_triangulated[i].reprojection_error > 16.0) {
+            continue; //reject point
+        }
+        if(new_triangulated[i].reprojection_error < 4.0 ||
            new_triangulated[i].reprojection_error < reprj_err_cutoff)
-		{
-			new_triangulated_filtered.push_back(new_triangulated[i]);
-			new_matches.push_back(matches[i]);
-		}
-		else
-		{
-			continue;
-		}
-	}
+        {
+            new_triangulated_filtered.push_back(new_triangulated[i]);
+            new_matches.push_back(matches[i]);
+        }
+        else
+        {
+            continue;
+        }
+    }
     
-	cout << "filtered out " << (new_triangulated.size() - new_triangulated_filtered.size()) << " high-error points" << endl;
+    cout << "filtered out " << (new_triangulated.size() - new_triangulated_filtered.size()) << " high-error points" << endl;
     
-	//all points filtered?
-	if(new_triangulated_filtered.size() <= 0) return false;
-	
-	new_triangulated = new_triangulated_filtered;
-	
-	matches = new_matches;
-	matches_matrix[std::make_pair(older_view,working_view)] = new_matches; //just to make sure, remove if unneccesary
-	matches_matrix[std::make_pair(working_view,older_view)] = FlipMatches(new_matches);
-	add_to_cloud.clear();
-	add_to_cloud.resize(new_triangulated.size(),1);
-	int found_other_views_count = 0;
-	unsigned long num_views = imgs.size();
+    //all points filtered?
+    if(new_triangulated_filtered.size() <= 0) return false;
     
-	//scan new triangulated points, if they were already triangulated before - strengthen cloud
-	//#pragma omp parallel for num_threads(1)
-	for (int j = 0; j<new_triangulated.size(); j++) {
-		new_triangulated[j].imgpt_for_img = std::vector<int>(imgs.size(),-1);
+    new_triangulated = new_triangulated_filtered;
+    
+    matches = new_matches;
+    matches_matrix[std::make_pair(older_view,working_view)] = new_matches; //just to make sure, remove if unneccesary
+    matches_matrix[std::make_pair(working_view,older_view)] = FlipMatches(new_matches);
+    add_to_cloud.clear();
+    add_to_cloud.resize(new_triangulated.size(),1);
+    int found_other_views_count = 0;
+    unsigned long num_views = imgs.size();
+    
+    //scan new triangulated points, if they were already triangulated before - strengthen cloud
+    //#pragma omp parallel for num_threads(1)
+    for (int j = 0; j<new_triangulated.size(); j++) {
+        new_triangulated[j].imgpt_for_img = std::vector<int>(imgs.size(),-1);
         
-		//matches[j] corresponds to new_triangulated[j]
-		//matches[j].queryIdx = point in <older_view>
-		//matches[j].trainIdx = point in <working_view>
-		new_triangulated[j].imgpt_for_img[older_view] = matches[j].queryIdx;	//2D reference to <older_view>
-		new_triangulated[j].imgpt_for_img[working_view] = matches[j].trainIdx;		//2D reference to <working_view>
-		bool found_in_other_view = false;
-		for (unsigned int view_ = 0; view_ < num_views; view_++) {
-			if(view_ != older_view) {
-				//Look for points in <view_> that match to points in <working_view>
-				std::vector<cv::DMatch> submatches = matches_matrix[std::make_pair(view_,working_view)];
-				for (unsigned int ii = 0; ii < submatches.size(); ii++) {
-					if (submatches[ii].trainIdx == matches[j].trainIdx &&
-						!found_in_other_view)
-					{
-						//Point was already found in <view_> - strengthen it in the known cloud, if it exists there
+        //matches[j] corresponds to new_triangulated[j]
+        //matches[j].queryIdx = point in <older_view>
+        //matches[j].trainIdx = point in <working_view>
+        new_triangulated[j].imgpt_for_img[older_view] = matches[j].queryIdx;	//2D reference to <older_view>
+        new_triangulated[j].imgpt_for_img[working_view] = matches[j].trainIdx;		//2D reference to <working_view>
+        bool found_in_other_view = false;
+        for (unsigned int view_ = 0; view_ < num_views; view_++) {
+            if(view_ != older_view) {
+                //Look for points in <view_> that match to points in <working_view>
+                std::vector<cv::DMatch> submatches = matches_matrix[std::make_pair(view_,working_view)];
+                for (unsigned int ii = 0; ii < submatches.size(); ii++) {
+                    if (submatches[ii].trainIdx == matches[j].trainIdx &&
+                        !found_in_other_view)
+                    {
+                        //Point was already found in <view_> - strengthen it in the known cloud, if it exists there
                         
-						//cout << "2d pt " << submatches[ii].queryIdx << " in img " << view_ << " matched 2d pt " << submatches[ii].trainIdx << " in img " << i << endl;
-						for (unsigned int pt3d=0; pt3d<pcloud.size(); pt3d++) {
-							if (pcloud[pt3d].imgpt_for_img[view_] == submatches[ii].queryIdx)
-							{
-								//pcloud[pt3d] - a point that has 2d reference in <view_>
+                        //cout << "2d pt " << submatches[ii].queryIdx << " in img " << view_ << " matched 2d pt " << submatches[ii].trainIdx << " in img " << i << endl;
+                        for (unsigned int pt3d=0; pt3d<pcloud.size(); pt3d++) {
+                            if (pcloud[pt3d].imgpt_for_img[view_] == submatches[ii].queryIdx)
+                            {
+                                //pcloud[pt3d] - a point that has 2d reference in <view_>
                                 
-								//cout << "3d point "<<pt3d<<" in cloud, referenced 2d pt " << submatches[ii].queryIdx << " in view " << view_ << endl;
+                                //cout << "3d point "<<pt3d<<" in cloud, referenced 2d pt " << submatches[ii].queryIdx << " in view " << view_ << endl;
 #pragma omp critical
-								{
-									pcloud[pt3d].imgpt_for_img[working_view] = matches[j].trainIdx;
-									pcloud[pt3d].imgpt_for_img[older_view] = matches[j].queryIdx;
-									found_in_other_view = true;
-									add_to_cloud[j] = 0;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+                                {
+                                    pcloud[pt3d].imgpt_for_img[working_view] = matches[j].trainIdx;
+                                    pcloud[pt3d].imgpt_for_img[older_view] = matches[j].queryIdx;
+                                    found_in_other_view = true;
+                                    add_to_cloud[j] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 #pragma omp critical
-		{
-			if (found_in_other_view) {
-				found_other_views_count++;
-			} else {
-				add_to_cloud[j] = 1;
-			}
-		}
-	}
-	
+        {
+            if (found_in_other_view) {
+                found_other_views_count++;
+            } else {
+                add_to_cloud[j] = 1;
+            }
+        }
+    }
+    
     std::cout << found_other_views_count << "/" << new_triangulated.size() << " points were found in other views, adding " << cv::countNonZero(add_to_cloud) << " new\n";
     return true;
 }
 
 void MultiCameraPnP::AdjustCurrentBundle() {
-
+    
 	cv::Mat _cam_matrix = K;
 	BundleAdjuster BA;
 	BA.adjustBundle(pcloud,_cam_matrix,imgpts,Pmats);
 	K = cam_matrix;//I think there's a bug......
 	Kinv = K.inv();
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "use new K " << endl << K << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "use new K " << endl << K << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
     
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "output project matrices after BA" << endl;
-    
-    cv::FileStorage f;
-    f.open(baselineTriangulationAfterBADebugOutput, cv::FileStorage::WRITE);
-    f << "P" << cv::Mat(Pmats[m_first_view]);
-    f << "P1" << cv::Mat(Pmats[m_second_view]);
-    f.release();
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "output project matrices after BA" << endl;
+        
+        cv::FileStorage f;
+        f.open(baselineTriangulationAfterBADebugOutput, cv::FileStorage::WRITE);
+        f << "P" << cv::Mat(Pmats[m_first_view]);
+        f << "P1" << cv::Mat(Pmats[m_second_view]);
+        f.release();
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
-
+    
 }
 

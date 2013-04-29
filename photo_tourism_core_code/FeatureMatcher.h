@@ -21,7 +21,7 @@ private:
 	std::vector<std::vector<cv::KeyPoint> >& imgpts;
 public:
     FeatureMatcher(std::vector<cv::Mat>& imgs,
-					   std::vector<std::vector<cv::KeyPoint> >& imgpts);
+                   std::vector<std::vector<cv::KeyPoint> >& imgpts);
 	void MatchFeatures(int idx_i, int idx_j, std::vector<cv::DMatch>* matches);
 };
 

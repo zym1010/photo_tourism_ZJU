@@ -78,9 +78,11 @@ void BundleAdjuster::adjustBundle(vector<CloudPoint>& pointcloud,
 	int N = Pmats.size(), M = pointcloud.size(), K = Count2DMeasurements(pointcloud);
 	
 #ifdef PHOTO_TOURISM_DEBUG
-    cerr << "======DEBUGGING INFO BEGINS======" << endl;
-    cerr << "N (cams) = " << N << " M (points) = " << M << " K (measurements) = " << K << endl;
-    cerr << "======DEBUGGING INFO ENDS======" << endl;
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "N (cams) = " << N << " M (points) = " << M << " K (measurements) = " << K << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
 #endif
 	
 	

@@ -44,7 +44,7 @@ void GetAlignedPointsFromMatch(const std::vector<cv::KeyPoint>& imgpts1,
 	for (unsigned int i=0; i<matches.size(); i++) {
 		pt_set1.push_back(imgpts1[matches[i].queryIdx]);
 		pt_set2.push_back(imgpts2[matches[i].trainIdx]);
-	}	
+	}
 }
 
 
