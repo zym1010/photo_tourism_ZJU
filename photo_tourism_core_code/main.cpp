@@ -83,6 +83,10 @@ int main(int argc, const char * argv[])
     distance->RecoverDepthFromImages();
     //recover image ends
     
+    //write results begins
+    distance->writeResults();
+    //write results ends
+    
     std::cout << "Hello, World!\n";
     return 0;
     

@@ -33,7 +33,7 @@ bool FindCameraMatrices(const cv::Mat& K,
 						);
 
 bool TestTriangulation(const std::vector<CloudPoint>& pcloud, const cv::Matx34d& P, std::vector<uchar>& status);
-
+bool CheckCoherentRotation(cv::Mat_<double>& R);
 
 #endif /* defined(__photo_tourism_core_code__FindCameraMatrices__) */
 

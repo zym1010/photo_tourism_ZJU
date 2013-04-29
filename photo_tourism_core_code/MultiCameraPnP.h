@@ -20,6 +20,7 @@ public:
     MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
                    const std::vector<std::string>& imgs_names_);
     void RecoverDepthFromImages();
+    void writeResults();
 private:
     //private functions
     void OnlyMatchFeatures();
@@ -32,6 +33,16 @@ private:
                                        std::vector<int>& add_to_cloud
                                        );
     void AdjustCurrentBundle();
+    void Find2D3DCorrespondences(int working_view,
+                                 std::vector<cv::Point3f>& ppcloud,
+                                 std::vector<cv::Point2f>& imgPoints);
+    bool FindPoseEstimation(
+                            int working_view,
+                            cv::Mat_<double>& rvec,
+                            cv::Mat_<double>& t,
+                            cv::Mat_<double>& R,
+                            std::vector<cv::Point3f> ppcloud,
+                            std::vector<cv::Point2f> imgPoints);
     
     //private variables
     std::vector<cv::Mat> imgs;
@@ -58,6 +69,8 @@ private:
     int m_first_view;
 	int m_second_view; //baseline's second view other to 0
     
+    std::set<int> done_views;
+    std::set<int> good_views;
     
     std::map<int,cv::Matx34d> Pmats;
     std::vector<cv::KeyPoint> correspImg1Pt; //TODO: remove

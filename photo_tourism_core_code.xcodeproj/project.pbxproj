@@ -231,6 +231,10 @@
 					/opt/local/lib,
 					"/SSBA-3.0/build",
 				);
+				OTHER_CFLAGS = (
+					"-msse4.1",
+					"-mfpmath=sse",
+				);
 				OTHER_LDFLAGS = (
 					"-lopencv_core",
 					"-lopencv_highgui",
@@ -255,6 +259,10 @@
 					"$(inherited)",
 					/opt/local/lib,
 					"/SSBA-3.0/build",
+				);
+				OTHER_CFLAGS = (
+					"-msse4.1",
+					"-mfpmath=sse",
 				);
 				OTHER_LDFLAGS = (
 					"-lopencv_core",

@@ -17,6 +17,42 @@
 using namespace std;
 static bool sort_by_first(pair<int,pair<int,int> > a, pair<int,pair<int,int> > b) { return a.first > b.first; }
 
+void MultiCameraPnP::writeResults(){
+    cout << "write image name list begins" << endl;
+    {
+        cv::FileStorage f;
+        f.open(imageNameOutput, cv::FileStorage::WRITE);
+        f << "name_list" << "[";
+        for (unsigned i = 0; i < imgs_names.size(); i++) {
+            f << imgs_names[i];
+        }
+        f << "]";
+        f.release();
+    }
+    cout << "write image name list ends" << endl;
+    
+#ifdef PHOTO_TOURISM_DEBUG
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "Pmats has size" << Pmats.size() << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
+#endif
+    
+    cout << "write final projection matrix list begins" << endl;
+    {
+        cv::FileStorage f;
+        f.open(finalProjectionMatrixOutput, cv::FileStorage::WRITE);
+        f << "mat_list" << "[";
+        for (unsigned i = 0; i < Pmats.size(); i++) {
+            f << cv::Mat(Pmats[i]);
+        }
+        f << "]";
+        f.release();
+    }
+    cout << "write final projection matrix list ends" << endl;
+}
+
 MultiCameraPnP::MultiCameraPnP(const std::vector<cv::Mat>& imgs_,
                                const std::vector<std::string>& imgs_names_):imgs_names(imgs_names_)
 {
@@ -98,7 +134,111 @@ void MultiCameraPnP::RecoverDepthFromImages(){
     PruneMatchesBasedOnF();
     
     GetBaseLineTriangulation();
+    
+#ifdef PHOTO_TOURISM_DEBUG
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write match matrix to file begins" << endl;
+        cv::FileStorage f;
+        f.open(refinedMatchMatrixAfterTriangulationDebugOutput, cv::FileStorage::WRITE);
+        f << "test_list" << "[";
+        for (unsigned i = 0; i < imgs.size()-1; i++) {
+            for (unsigned j = i+1; j < imgs.size(); j++) {
+                const std::vector<cv::DMatch> & current_match_vector = matches_matrix[std::make_pair(i,j)];
+                for (unsigned k = 0; k < current_match_vector.size(); k++) {
+                    f << current_match_vector[k].queryIdx;
+                    f << current_match_vector[k].trainIdx;
+                }
+            }
+        }
+        f << "]";
+        f.release();
+        cerr << "write match matrix to file ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
+#endif
+    
     AdjustCurrentBundle();
+        
+    //if there're only 2 images, we are done here.
+    //so what's above is what I want to understand.
+    
+	cv::Matx34d P1 = Pmats[m_second_view];
+	cv::Mat_<double> t = (cv::Mat_<double>(1,3) << P1(0,3), P1(1,3), P1(2,3));
+	cv::Mat_<double> R = (cv::Mat_<double>(3,3) << P1(0,0), P1(0,1), P1(0,2),
+                          P1(1,0), P1(1,1), P1(1,2),
+                          P1(2,0), P1(2,1), P1(2,2));
+	cv::Mat_<double> rvec(1,3); Rodrigues(R, rvec);
+	
+	done_views.insert(m_first_view);
+	done_views.insert(m_second_view);
+	good_views.insert(m_first_view);
+	good_views.insert(m_second_view);
+    
+    while (done_views.size() != imgs.size())
+	{
+		//find image with highest 2d-3d correspondance [Snavely07 4.2]
+		int max_2d3d_view = -1, max_2d3d_count = 0;
+		vector<cv::Point3f> max_3d; vector<cv::Point2f> max_2d;
+		for (unsigned int _i=0; _i < imgs.size(); _i++) {
+			if(done_views.find(_i) != done_views.end()) continue; //already done with this view
+            
+			vector<cv::Point3f> tmp3d; vector<cv::Point2f> tmp2d;
+			cout << imgs_names[_i] << ": ";
+			Find2D3DCorrespondences(_i,tmp3d,tmp2d);
+			if(tmp3d.size() > max_2d3d_count) {
+				max_2d3d_count = (int)tmp3d.size();
+				max_2d3d_view = _i;
+				max_3d = tmp3d; max_2d = tmp2d;
+			}
+		}
+		int i = max_2d3d_view; //highest 2d3d matching view
+        
+		std::cout << "-------------------------- " << imgs_names[i] << " --------------------------\n";
+		done_views.insert(i); // don't repeat it for now
+        
+        
+
+        
+        
+		bool pose_estimated = FindPoseEstimation(i,rvec,t,R,max_3d,max_2d);
+        
+        
+        
+		if(!pose_estimated)
+			continue;
+        
+		//store estimated pose
+		Pmats[i] = cv::Matx34d	(R(0,0),R(0,1),R(0,2),t(0),
+								 R(1,0),R(1,1),R(1,2),t(1),
+								 R(2,0),R(2,1),R(2,2),t(2));
+		
+		// start triangulating with previous GOOD views
+		for (set<int>::iterator done_view = good_views.begin(); done_view != good_views.end(); ++done_view)
+		{
+			int view = *done_view;
+			if( view == i ) continue; //skip current...
+            
+			cout << " -> " << imgs_names[view] << endl;
+			
+			vector<CloudPoint> new_triangulated;
+			vector<int> add_to_cloud;
+			bool good_triangulation = TriangulatePointsBetweenViews(i,view,new_triangulated,add_to_cloud);
+			if(!good_triangulation) continue;
+            
+			std::cout << "before triangulation: " << pcloud.size();
+			for (int j=0; j<add_to_cloud.size(); j++) {
+				if(add_to_cloud[j] == 1)
+					pcloud.push_back(new_triangulated[j]);
+			}
+			std::cout << " after " << pcloud.size() << std::endl;
+			//break;
+		}
+		good_views.insert(i);
+		
+		AdjustCurrentBundle();
+	}
+    
 }
 
 void MultiCameraPnP::OnlyMatchFeatures(){
@@ -473,19 +613,174 @@ void MultiCameraPnP::AdjustCurrentBundle() {
     }
 #endif
     
+//#ifdef PHOTO_TOURISM_DEBUG
+//    {
+//        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+//        cerr << "output project matrices after BA" << endl;
+//        
+//        cv::FileStorage f;
+//        f.open(baselineTriangulationAfterBADebugOutput, cv::FileStorage::WRITE);
+//        f << "P" << cv::Mat(Pmats[m_first_view]);
+//        f << "P1" << cv::Mat(Pmats[m_second_view]);
+//        f.release();
+//        cerr << "======DEBUGGING INFO ENDS======" << endl;
+//    }
+//#endif
+    
+}
+
+
+void MultiCameraPnP::Find2D3DCorrespondences(int working_view,
+                                             std::vector<cv::Point3f>& ppcloud,
+                                             std::vector<cv::Point2f>& imgPoints)
+{
+	ppcloud.clear(); imgPoints.clear();
+    
+	vector<int> pcloud_status(pcloud.size(),0);
+	for (set<int>::iterator done_view = good_views.begin(); done_view != good_views.end(); ++done_view)
+	{
+		int old_view = *done_view;
+		//check for matches_from_old_to_working between i'th frame and <old_view>'th frame (and thus the current cloud)
+		std::vector<cv::DMatch> matches_from_old_to_working = matches_matrix[std::make_pair(old_view,working_view)];
+        
+		for (unsigned int match_from_old_view=0; match_from_old_view < matches_from_old_to_working.size(); match_from_old_view++) {
+			// the index of the matching point in <old_view>
+			int idx_in_old_view = matches_from_old_to_working[match_from_old_view].queryIdx;
+            
+			//scan the existing cloud (pcloud) to see if this point from <old_view> exists
+			for (unsigned int pcldp=0; pcldp<pcloud.size(); pcldp++) {
+				// see if corresponding point was found in this point
+				if (idx_in_old_view == pcloud[pcldp].imgpt_for_img[old_view] && pcloud_status[pcldp] == 0) //prevent duplicates
+				{
+					//3d point in cloud
+					ppcloud.push_back(pcloud[pcldp].pt);
+					//2d point in image i
+					imgPoints.push_back(imgpts[working_view][matches_from_old_to_working[match_from_old_view].trainIdx].pt);
+                    
+					pcloud_status[pcldp] = 1;
+					break;
+				}
+			}
+		}
+	}
+	cout << "found " << ppcloud.size() << " 3d-2d point correspondences"<<endl;
+}
+
+bool MultiCameraPnP::FindPoseEstimation(
+                                        int working_view,
+                                        cv::Mat_<double>& rvec,
+                                        cv::Mat_<double>& t,
+                                        cv::Mat_<double>& R,
+                                        std::vector<cv::Point3f> ppcloud,
+                                        std::vector<cv::Point2f> imgPoints
+                                        )
+{
+	if(ppcloud.size() <= 7 || imgPoints.size() <= 7 || ppcloud.size() != imgPoints.size()) {
+		//something went wrong aligning 3D to 2D points..
+		cerr << "couldn't find [enough] corresponding cloud points... (only " << ppcloud.size() << ")" <<endl;
+		return false;
+	}
+    
+	vector<int> inliers;
+
+    //use CPU
+    double minVal,maxVal; cv::minMaxIdx(imgPoints,&minVal,&maxVal);
+    
+    
 #ifdef PHOTO_TOURISM_DEBUG
     {
         cerr << "======DEBUGGING INFO BEGINS======" << endl;
-        cerr << "output project matrices after BA" << endl;
-        
+        cerr << "write max2d begins" << endl;
         cv::FileStorage f;
-        f.open(baselineTriangulationAfterBADebugOutput, cv::FileStorage::WRITE);
-        f << "P" << cv::Mat(Pmats[m_first_view]);
-        f << "P1" << cv::Mat(Pmats[m_second_view]);
+        f.open(max2DDebugOutput, cv::FileStorage::WRITE);
+        f << "max2d_list" << "[";
+        for (unsigned i = 0; i < imgPoints.size(); i++) {
+            f << imgPoints[i].x << imgPoints[i].y;
+        }
+        f << "]";
         f.release();
+        cerr << "write max2d ends" << endl;
         cerr << "======DEBUGGING INFO ENDS======" << endl;
     }
 #endif
     
+    
+#ifdef PHOTO_TOURISM_DEBUG
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write max3d begins" << endl;
+        cv::FileStorage f;
+        f.open(max3DDebugOutput, cv::FileStorage::WRITE);
+        f << "max3d_list" << "[";
+        for (unsigned i = 0; i < ppcloud.size(); i++) {
+            f << ppcloud[i].x << ppcloud[i].y;
+        }
+        f << "]";
+        f.release();
+        cerr << "write max3d ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
+#endif
+    
+#ifdef PHOTO_TOURISM_DEBUG
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write other value begins" << endl;
+        cv::FileStorage f;
+        f.open(otherValueDebugOutput, cv::FileStorage::WRITE);
+        f << "maxVal" << maxVal;
+        f << "K" << K;
+        f << "dist" << distortion_coeff;
+        f.release();
+        cerr << "write other value ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
+#endif
+    
+    CV_PROFILE("solvePnPRansac",cv::solvePnPRansac(ppcloud, imgPoints, K, distortion_coeff, rvec, t, true, 1000, 0.006 * maxVal, 0.25 * (double)(imgPoints.size()), inliers, CV_EPNP);)
+    
+    
+#ifdef PHOTO_TOURISM_DEBUG
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write result begins" << endl;
+        cv::FileStorage f;
+        f.open(resultDebugOutput, cv::FileStorage::WRITE);
+        f << "rvec" << rvec;
+        f << "t" << t;
+        f.release();
+        cerr << "write result ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
+#endif
+    
+	vector<cv::Point2f> projected3D;
+	cv::projectPoints(ppcloud, rvec, t, K, distortion_coeff, projected3D);
+    
+	if(inliers.size()==0) { //get inliers
+		for(int i=0;i<projected3D.size();i++) {
+			if(norm(projected3D[i]-imgPoints[i]) < 10.0)
+				inliers.push_back(i);
+		}
+	}
+    
+	if(inliers.size() < (double)(imgPoints.size())/5.0) {
+		cerr << "not enough inliers to consider a good pose ("<<inliers.size()<<"/"<<imgPoints.size()<<")"<< endl;
+		return false;
+	}
+    
+	if(cv::norm(t) > 200.0) {
+		// this is bad...
+		cerr << "estimated camera movement is too big, skip this camera\r\n";
+		return false;
+	}
+    
+	cv::Rodrigues(rvec, R);
+	if(!CheckCoherentRotation(R)) {
+		cerr << "rotation is incoherent. we should try a different base view..." << endl;
+		return false;
+	}
+    
+	std::cout << "found t = " << t << "\nR = \n"<<R<<std::endl;
+	return true;
 }
-

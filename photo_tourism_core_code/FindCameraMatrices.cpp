@@ -274,3 +274,14 @@ bool TestTriangulation(const vector<CloudPoint>& pcloud, const Matx34d& P, vecto
     
 	return true;
 }
+
+
+bool CheckCoherentRotation(cv::Mat_<double>& R) {
+    
+	if(fabs(determinant(R))-1.0 > 1e-07) {
+		cerr << "det(R) != +-1.0, this is not a rotation matrix" << endl;
+		return false;
+	}
+    
+	return true;
+}
