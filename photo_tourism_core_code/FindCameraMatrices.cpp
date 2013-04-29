@@ -263,6 +263,7 @@ bool TestTriangulation(const vector<CloudPoint>& pcloud, const Matx34d& P, vecto
 	int count = countNonZero(status);
     
 	double percentage = ((double)count / (double)pcloud.size());
+    cout << count << "/" << pcloud.size() << " = " << percentage*100.0 << "% are in front of camera" << endl;
 	if(percentage < frontPercentageThreshold){
 		return false; //less than frontPercentageThreshold*100 % of the points are in front of the camera
     }

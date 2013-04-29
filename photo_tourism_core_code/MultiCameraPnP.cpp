@@ -12,7 +12,7 @@
 #include "helper.h"
 #include "FindCameraMatrices.h"
 #include "Triangulation.h"
-
+#include "BundleAdjuster.h"
 
 using namespace std;
 static bool sort_by_first(pair<int,pair<int,int> > a, pair<int,pair<int,int> > b) { return a.first > b.first; }
@@ -94,7 +94,7 @@ void MultiCameraPnP::RecoverDepthFromImages(){
     PruneMatchesBasedOnF();
     
     GetBaseLineTriangulation();
-    
+    AdjustCurrentBundle();
 }
 
 void MultiCameraPnP::OnlyMatchFeatures(){
@@ -232,7 +232,7 @@ void MultiCameraPnP::GetBaseLineTriangulation(){
         cerr << "======DEBUGGING INFO ENDS======" << endl;
 #endif
         
-//		std::cout << " -------- " << imgs_names[m_first_view] << " and " << imgs_names[m_second_view] << " -------- " <<std::endl;//ZYM: a prompt showing two images being used for base triangulation
+		std::cout << " -------- " << imgs_names[m_first_view] << " and " << imgs_names[m_second_view] << " -------- " <<std::endl;//ZYM: a prompt showing two images being used for base triangulation
         
 		//what if reconstrcution of first two views is bad? fallback to another pair
 		//See if the Fundamental Matrix between these two views is good
@@ -273,12 +273,12 @@ void MultiCameraPnP::GetBaseLineTriangulation(){
 				Pmats[m_second_view] = 0;
 				m_second_view++;
 			} else {
-//				std::cout << "before triangulation: " << pcloud.size();
+				std::cout << "before triangulation: " << pcloud.size();
 				for (unsigned int j=0; j<add_to_cloud.size(); j++) {
 					if(add_to_cloud[j] == 1)
 						pcloud.push_back(new_triangulated[j]);
 				}
-//				std::cout << " after " << pcloud.size() << std::endl;
+				std::cout << " after " << pcloud.size() << std::endl;
 			}
 		}
         
@@ -315,7 +315,7 @@ bool MultiCameraPnP::TriangulatePointsBetweenViews(
                                                    vector<int>& add_to_cloud
                                                    )
 {
-//	cout << " Triangulate " << imgs_names[working_view] << " and " << imgs_names[older_view] << endl;
+	cout << " Triangulate " << imgs_names[working_view] << " and " << imgs_names[older_view] << endl;
 	//get the left camera matrix
 	//TODO: potential bug - the P mat for <view> may not exist? or does it...
 	cv::Matx34d P = Pmats[older_view];
@@ -372,7 +372,7 @@ bool MultiCameraPnP::TriangulatePointsBetweenViews(
 		}
 	}
     
-//	cout << "filtered out " << (new_triangulated.size() - new_triangulated_filtered.size()) << " high-error points" << endl;
+	cout << "filtered out " << (new_triangulated.size() - new_triangulated_filtered.size()) << " high-error points" << endl;
     
 	//all points filtered?
 	if(new_triangulated_filtered.size() <= 0) return false;
@@ -437,5 +437,35 @@ bool MultiCameraPnP::TriangulatePointsBetweenViews(
 			}
 		}
 	}
-	return true;
+	
+    std::cout << found_other_views_count << "/" << new_triangulated.size() << " points were found in other views, adding " << cv::countNonZero(add_to_cloud) << " new\n";
+    return true;
 }
+
+void MultiCameraPnP::AdjustCurrentBundle() {
+
+	cv::Mat _cam_matrix = K;
+	BundleAdjuster BA;
+	BA.adjustBundle(pcloud,_cam_matrix,imgpts,Pmats);
+	K = cam_matrix;//I think there's a bug......
+	Kinv = K.inv();
+#ifdef PHOTO_TOURISM_DEBUG
+    cerr << "======DEBUGGING INFO BEGINS======" << endl;
+    cerr << "use new K " << endl << K << endl;
+    cerr << "======DEBUGGING INFO ENDS======" << endl;
+#endif
+    
+#ifdef PHOTO_TOURISM_DEBUG
+    cerr << "======DEBUGGING INFO BEGINS======" << endl;
+    cerr << "output project matrices after BA" << endl;
+    
+    cv::FileStorage f;
+    f.open(baselineTriangulationAfterBADebugOutput, cv::FileStorage::WRITE);
+    f << "P" << cv::Mat(Pmats[m_first_view]);
+    f << "P1" << cv::Mat(Pmats[m_second_view]);
+    f.release();
+    cerr << "======DEBUGGING INFO ENDS======" << endl;
+#endif
+
+}
+

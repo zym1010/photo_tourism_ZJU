@@ -31,6 +31,7 @@ private:
                                        std::vector<struct CloudPoint>& new_triangulated,
                                        std::vector<int>& add_to_cloud
                                        );
+    void AdjustCurrentBundle();
     
     //private variables
     std::vector<cv::Mat> imgs;

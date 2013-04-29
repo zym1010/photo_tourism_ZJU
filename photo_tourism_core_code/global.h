@@ -18,5 +18,6 @@ const char * const descriptorDebugOutput = "descriptorDebugOutput.xml";
 const char * const initialMatchMatrixDebugOutput = "initialMatchMatrixDebugOutput.xml";
 const char * const refinedMatchMatrixDebugOutput = "refinedMatchMatrixDebugOutput.xml";
 const char * const baselineTriangulationDebugOutput = "baselineTriangulationDebugOutput.xml";
+const char * const baselineTriangulationAfterBADebugOutput = "baselineTriangulationAfterBADebugOutput.xml";
 
 #endif

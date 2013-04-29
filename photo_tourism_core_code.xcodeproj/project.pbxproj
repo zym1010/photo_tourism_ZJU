@@ -14,6 +14,7 @@
 		2AA7FE8D172D02C8004897B3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AA7FE8C172D02C8004897B3 /* main.cpp */; };
 		2AA7FE8F172D02C8004897B3 /* photo_tourism_core_code.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2AA7FE8E172D02C8004897B3 /* photo_tourism_core_code.1 */; };
 		2AA91DFE172DF60F007C3255 /* Triangulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AA91DFC172DF60E007C3255 /* Triangulation.cpp */; };
+		2AA91E1A172E0D20007C3255 /* BundleAdjuster.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AA91E18172E0D20007C3255 /* BundleAdjuster.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +45,8 @@
 		2AA7FE8E172D02C8004897B3 /* photo_tourism_core_code.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = photo_tourism_core_code.1; sourceTree = "<group>"; };
 		2AA91DFC172DF60E007C3255 /* Triangulation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Triangulation.cpp; sourceTree = "<group>"; };
 		2AA91DFD172DF60F007C3255 /* Triangulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Triangulation.h; sourceTree = "<group>"; };
+		2AA91E18172E0D20007C3255 /* BundleAdjuster.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BundleAdjuster.cpp; sourceTree = "<group>"; };
+		2AA91E19172E0D20007C3255 /* BundleAdjuster.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BundleAdjuster.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +92,8 @@
 				2A91EC62172D60EA0038F7BA /* FindCameraMatrices.h */,
 				2AA91DFC172DF60E007C3255 /* Triangulation.cpp */,
 				2AA91DFD172DF60F007C3255 /* Triangulation.h */,
+				2AA91E18172E0D20007C3255 /* BundleAdjuster.cpp */,
+				2AA91E19172E0D20007C3255 /* BundleAdjuster.h */,
 			);
 			path = photo_tourism_core_code;
 			sourceTree = "<group>";
@@ -150,6 +155,7 @@
 				2A91EC5C172D52E50038F7BA /* FeatureMatcher.cpp in Sources */,
 				2A91EC63172D60EA0038F7BA /* FindCameraMatrices.cpp in Sources */,
 				2AA91DFE172DF60F007C3255 /* Triangulation.cpp in Sources */,
+				2AA91E1A172E0D20007C3255 /* BundleAdjuster.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,10 +222,14 @@
 		2AA7FE93172D02C8004897B3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				HEADER_SEARCH_PATHS = /opt/local/include;
+				HEADER_SEARCH_PATHS = (
+					/opt/local/include,
+					"/SSBA-3.0",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/opt/local/lib,
+					"/SSBA-3.0/build",
 				);
 				OTHER_LDFLAGS = (
 					"-lopencv_core",
@@ -227,6 +237,8 @@
 					"-lopencv_imgproc",
 					"-lopencv_features2d",
 					"-lopencv_calib3d",
+					"-lcolamd",
+					"-lV3D",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -235,10 +247,14 @@
 		2AA7FE94172D02C8004897B3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				HEADER_SEARCH_PATHS = /opt/local/include;
+				HEADER_SEARCH_PATHS = (
+					/opt/local/include,
+					"/SSBA-3.0",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/opt/local/lib,
+					"/SSBA-3.0/build",
 				);
 				OTHER_LDFLAGS = (
 					"-lopencv_core",
@@ -246,6 +262,8 @@
 					"-lopencv_imgproc",
 					"-lopencv_features2d",
 					"-lopencv_calib3d",
+					"-lcolamd",
+					"-lV3D",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

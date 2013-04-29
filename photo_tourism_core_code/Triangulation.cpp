@@ -75,7 +75,7 @@ double TriangulatePoints(const vector<KeyPoint>& pt_set1,
 				P1(2,0),P1(2,1),P1(2,2),P1(2,3),
 				0,		0,		0,		1);
 	
-//	cout << "Triangulating...";
+    cout << "Triangulating...";
 	vector<double> reproj_error;
 	unsigned long pts_size = pt_set1.size();
 
@@ -115,6 +115,8 @@ double TriangulatePoints(const vector<KeyPoint>& pt_set1,
 	
 	Scalar mse = mean(reproj_error);
 
+    cout << "Done. ("<<pointcloud.size()<<"points, " << ", mean reproj err = " << mse[0] << ")"<< endl;
+    
 	return mse[0];
 }
 
