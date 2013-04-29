@@ -10,7 +10,14 @@
 #define photo_tourism_core_code_global_h
 
 // this is the flag for outputting additional debug info
-#define PHOTO_TOURISM_DEBUG
+//#define PHOTO_TOURISM_DEBUG
+//#define PHOTO_TOURISM_DEBUG_BINARY
+
+
+const char * const max2DDebugOutputBin = "max2DDebugOutputBin.bin";
+const char * const max3DDebugOutputBin = "max3DDebugOutputBin.bin";
+const char * const otherValueDebugOutputBin = "otherValueDebugOutputBin.bin";
+
 
 // some constants for debugging
 const char * const imageReadingDebugOutput = "imageReadingDebugOutput.xml";

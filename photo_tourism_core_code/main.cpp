@@ -87,7 +87,7 @@ int main(int argc, const char * argv[])
     distance->writeResults();
     //write results ends
     
-    std::cout << "Hello, World!\n";
+
     return 0;
     
     

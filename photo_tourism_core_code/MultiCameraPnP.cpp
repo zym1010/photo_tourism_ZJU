@@ -13,6 +13,7 @@
 #include "FindCameraMatrices.h"
 #include "Triangulation.h"
 #include "BundleAdjuster.h"
+#include <cstdio>
 
 using namespace std;
 static bool sort_by_first(pair<int,pair<int,int> > a, pair<int,pair<int,int> > b) { return a.first > b.first; }
@@ -34,7 +35,7 @@ void MultiCameraPnP::writeResults(){
 #ifdef PHOTO_TOURISM_DEBUG
     {
         cerr << "======DEBUGGING INFO BEGINS======" << endl;
-        cerr << "Pmats has size" << Pmats.size() << endl;
+        cerr << "Pmats has size " << Pmats.size() << endl;
         cerr << "======DEBUGGING INFO ENDS======" << endl;
     }
 #endif
@@ -704,6 +705,25 @@ bool MultiCameraPnP::FindPoseEstimation(
     }
 #endif
     
+#ifdef PHOTO_TOURISM_DEBUG_BINARY
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write max2d bin begins" << endl;
+        FILE *fp = fopen(max2DDebugOutputBin,"wb");
+        int count = 0;
+        for (unsigned i = 0; i < imgPoints.size(); i++) {
+            fwrite(&(imgPoints[i].x), sizeof(float), 1, fp);
+            fwrite(&(imgPoints[i].y), sizeof(float), 1, fp);
+            count = count+1;
+        }
+        cerr << "in total " << count << " pairs" << endl;
+        fclose(fp);
+        cerr << "write max2d bin ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+        
+    }
+#endif
+    
     
 #ifdef PHOTO_TOURISM_DEBUG
     {
@@ -713,11 +733,30 @@ bool MultiCameraPnP::FindPoseEstimation(
         f.open(max3DDebugOutput, cv::FileStorage::WRITE);
         f << "max3d_list" << "[";
         for (unsigned i = 0; i < ppcloud.size(); i++) {
-            f << ppcloud[i].x << ppcloud[i].y;
+            f << ppcloud[i].x << ppcloud[i].y << ppcloud[i].z;
         }
         f << "]";
         f.release();
         cerr << "write max3d ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
+#endif
+    
+#ifdef PHOTO_TOURISM_DEBUG_BINARY
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write max3d bin begins" << endl;
+        FILE *fp = fopen(max3DDebugOutputBin,"wb");
+        int count = 0;
+        for (unsigned i = 0; i < ppcloud.size(); i++) {
+            fwrite(&(ppcloud[i].x), sizeof(float), 1, fp);
+            fwrite(&(ppcloud[i].y), sizeof(float), 1, fp);
+            fwrite(&(ppcloud[i].z), sizeof(float), 1, fp);
+            count = count+1;
+        }
+        fclose(fp);
+        cerr << "in total " << count << " triples" << endl;
+        cerr << "write max3d bin ends" << endl;
         cerr << "======DEBUGGING INFO ENDS======" << endl;
     }
 #endif
@@ -737,6 +776,27 @@ bool MultiCameraPnP::FindPoseEstimation(
     }
 #endif
     
+    
+#ifdef PHOTO_TOURISM_DEBUG_BINARY
+    {
+        cerr << "======DEBUGGING INFO BEGINS======" << endl;
+        cerr << "write other value bin begins" << endl;
+        FILE *fp = fopen(otherValueDebugOutputBin,"wb");
+        cerr << "write K begins" << endl;
+        for (unsigned i = 0; i < 9; i++) {
+            fwrite(&(K.at<double>(i)), sizeof(double), 1, fp);
+        }
+        cerr << "write K ends" << endl;
+        
+        cerr << "write maxVal begins" << endl;
+        fwrite(&maxVal, sizeof(double), 1, fp);
+        cerr << "write maxVal ends" << endl;
+        fclose(fp);
+        cerr << "write other value bin ends" << endl;
+        cerr << "======DEBUGGING INFO ENDS======" << endl;
+    }
+#endif
+    
     CV_PROFILE("solvePnPRansac",cv::solvePnPRansac(ppcloud, imgPoints, K, distortion_coeff, rvec, t, true, 1000, 0.006 * maxVal, 0.25 * (double)(imgPoints.size()), inliers, CV_EPNP);)
     
     
@@ -751,6 +811,7 @@ bool MultiCameraPnP::FindPoseEstimation(
         f.release();
         cerr << "write result ends" << endl;
         cerr << "======DEBUGGING INFO ENDS======" << endl;
+        exit(0); //so that we can check what happens about the first execution of cv::solvePnPRansac.
     }
 #endif
     
