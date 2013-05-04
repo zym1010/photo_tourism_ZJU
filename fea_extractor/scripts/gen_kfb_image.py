@@ -64,7 +64,8 @@ with open(video_list) as f:
 #        cmd2 = '{TxycWrapper} {txyc} {center} {gz} {txyc_gz} {feature} txyc 4096 10 {dim}'.format(TxycWrapper = TxycWrapper, txyc = txyc, center = center, gz = gz, txyc_gz = txyc_gz, feature = feature, dim = dim)
  #       cmd3 = '{SpbofWrapper} {spbof} {txyc_gz} {spbof_gz} txyc spbof 4096 10 1 {resolution}'.format(SpbofWrapper = SpbofWrapper, spbof = spbof, txyc_gz = txyc_gz, spbof_gz = spbof_gz, resolution = resolution)
   #      cmd4 = '{BofMerger} {spbof_gz} {merged_spbof} spbof'.format(BofMerger = BofMerger, spbof_gz = spbof_gz, merged_spbof = merged_spbof)
-#        cmd5 = 'touch {record}'.format(record = record)
-        cmd = '({0} > {1} 2>{2}'.format(cmd1, stdout_file, stderr_file)
+        cmd5 = 'touch {record}'.format(record = record)
+       # cmd = '{0} }'.format(cmd1, stdout_file, stderr_file)
+        cmd = cmd1 + ' && ' + cmd5
         print cmd
 f.close()

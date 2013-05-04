@@ -1,0 +1,18 @@
+#PBS -N csift.job
+#PBS -S /bin/bash
+#PBS -e /home/zhongwen/guochuang/logs/csift.job.err
+#PBS -o /home/zhongwen/guochuang/logs/csift.job.log
+#PBS -l pmem=1g
+#PBS -l walltime=24:00:00
+#PBS -l nodes=1:ppn=1
+#PBS -d /home/zhongwen/guochuang
+#PBS -t 1-33
+start_idx=$((($PBS_ARRAYID-1)*300+1))
+for ((i=$start_idx;i<$start_idx+300;i++))
+do
+if [ $i -le 9641 ]
+then
+script=$(sed -n -e "$i p" /home/zhongwen/guochuang/csift.command)
+eval $script
+fi
+done
