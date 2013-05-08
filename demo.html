@@ -35,7 +35,7 @@
 					// Functionality
 					slideshow               :   1,			// Slideshow on/off
 					autoplay				:	0,			// Slideshow starts playing automatically
-					start_slide             :   1,			// Start slide (0 is random)
+					start_slide             :   16,			// Start slide (0 is random)
 					stop_loop				:	1,			// Pauses slideshow on last slide
 					random					: 	0,			// Randomize slide order (Ignores start slide)
 					slide_interval          :   3000,		// Length between transitions
@@ -95,7 +95,7 @@
 												
 					// Theme Options			   
 					progress_bar			:	1,			// Timer for each slide							
-					mouse_scrub				:	0
+					mouse_scrub				:	1
 					
 				});
 		    });
@@ -122,8 +122,8 @@
 	<a id="nextslide" class="load-item"></a>
 	
 	<div id="thumb-tray" class="load-item">
-		<div id="thumb-back"></div>
-		<div id="thumb-forward"></div>
+		<!--<div id="thumb-back"></div>
+		<div id="thumb-forward"></div>-->
 	</div>
 	
 	<!--Time Bar-->
@@ -146,7 +146,7 @@
 			<div id="slidecaption"></div>
 			
 			<!--Thumb Tray button-->
-			<a id="tray-button"><img id="tray-arrow" src="img/button-tray-up.png"/></a>
+			<a id="tray-button"><img id="tray-arrow" src="img/button-tray-down.png"/></a>
 			
 			<!--Navigation-->
 			<ul id="slide-list"></ul>
